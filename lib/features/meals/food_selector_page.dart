@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -5,6 +6,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/models/food.dart';
 import '../../core/models/meal_food_item.dart';
 import '../../core/providers/foods_provider.dart';
+import '../shared/widgets/macro_row.dart';
 import 'widgets/measurement_dialog.dart';
 
 class FoodSelectorPage extends ConsumerStatefulWidget {
@@ -217,6 +219,8 @@ class _FoodTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
+          _FoodPhoto(photoPath: food.photoPath),
+          const SizedBox(width: 12),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -225,7 +229,13 @@ class _FoodTile extends StatelessWidget {
                     style: const TextStyle(
                         fontWeight: FontWeight.w600, fontSize: 15)),
                 const SizedBox(height: 4),
-                _MacroColumn(food: food),
+                MacroRow(
+                  kcal: food.kcal,
+                  protein: food.protein,
+                  carbs: food.carbs,
+                  fat: food.fat,
+                  compact: true,
+                ),
               ],
             ),
           ),
@@ -313,52 +323,31 @@ class _FoodTile extends StatelessWidget {
   }
 }
 
-class _MacroColumn extends StatelessWidget {
-  final Food food;
-  const _MacroColumn({required this.food});
+class _FoodPhoto extends StatelessWidget {
+  final String? photoPath;
+  const _FoodPhoto({this.photoPath});
 
   @override
   Widget build(BuildContext context) {
-    const style = TextStyle(fontSize: 12, color: Colors.white54);
-    const valueStyle = TextStyle(
-        fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w500);
-
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text('${food.kcal.toStringAsFixed(0)} kcal',
-            style: valueStyle.copyWith(color: Colors.white)),
-        const SizedBox(height: 2),
-        _MacroLine(label: 'Protein', value: food.protein, style: style, valueStyle: valueStyle),
-        _MacroLine(label: 'Carbs', value: food.carbs, style: style, valueStyle: valueStyle),
-        _MacroLine(label: 'Fat', value: food.fat, style: style, valueStyle: valueStyle),
-      ],
-    );
-  }
-}
-
-class _MacroLine extends StatelessWidget {
-  final String label;
-  final double value;
-  final TextStyle style;
-  final TextStyle valueStyle;
-
-  const _MacroLine(
-      {required this.label,
-      required this.value,
-      required this.style,
-      required this.valueStyle});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      children: [
-        SizedBox(
-          width: 52,
-          child: Text(label, style: style),
+    if (photoPath != null && File(photoPath!).existsSync()) {
+      return ClipRRect(
+        borderRadius: BorderRadius.circular(8),
+        child: Image.file(
+          File(photoPath!),
+          width: 48,
+          height: 48,
+          fit: BoxFit.cover,
         ),
-        Text('${value.toStringAsFixed(1)}g', style: valueStyle),
-      ],
+      );
+    }
+    return Container(
+      width: 48,
+      height: 48,
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2E),
+        borderRadius: BorderRadius.circular(8),
+      ),
+      child: const Icon(Icons.fastfood_outlined, color: Colors.white38, size: 20),
     );
   }
 }

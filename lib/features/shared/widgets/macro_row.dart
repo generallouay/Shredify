@@ -18,45 +18,57 @@ class MacroRow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final style = compact
-        ? Theme.of(context).textTheme.labelSmall
-        : Theme.of(context).textTheme.labelMedium;
-    final valueStyle = style?.copyWith(
-        color: Colors.white, fontWeight: FontWeight.w600);
-    final labelStyle = style?.copyWith(color: Colors.white54);
+    final labelStyle = TextStyle(
+      fontSize: compact ? 12 : 13,
+      color: Colors.white54,
+    );
+    final valueStyle = TextStyle(
+      fontSize: compact ? 12 : 13,
+      color: Colors.white70,
+      fontWeight: FontWeight.w500,
+    );
+    final kcalStyle = TextStyle(
+      fontSize: compact ? 12 : 13,
+      color: Colors.white,
+      fontWeight: FontWeight.w600,
+    );
 
-    return Wrap(
-      spacing: compact ? 10 : 16,
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _Macro(value: kcal, unit: 'kcal', valueStyle: valueStyle, labelStyle: labelStyle),
-        _Macro(value: protein, unit: 'P', valueStyle: valueStyle, labelStyle: labelStyle),
-        _Macro(value: carbs, unit: 'C', valueStyle: valueStyle, labelStyle: labelStyle),
-        _Macro(value: fat, unit: 'F', valueStyle: valueStyle, labelStyle: labelStyle),
+        Text('${kcal.toStringAsFixed(0)} kcal', style: kcalStyle),
+        const SizedBox(height: 2),
+        _MacroLine(label: 'Protein', value: protein, labelStyle: labelStyle, valueStyle: valueStyle),
+        _MacroLine(label: 'Carbs',   value: carbs,   labelStyle: labelStyle, valueStyle: valueStyle),
+        _MacroLine(label: 'Fat',     value: fat,     labelStyle: labelStyle, valueStyle: valueStyle),
       ],
     );
   }
 }
 
-class _Macro extends StatelessWidget {
+class _MacroLine extends StatelessWidget {
+  final String label;
   final double value;
-  final String unit;
-  final TextStyle? valueStyle;
-  final TextStyle? labelStyle;
+  final TextStyle labelStyle;
+  final TextStyle valueStyle;
 
-  const _Macro(
-      {required this.value,
-      required this.unit,
-      this.valueStyle,
-      this.labelStyle});
+  const _MacroLine({
+    required this.label,
+    required this.value,
+    required this.labelStyle,
+    required this.valueStyle,
+  });
 
   @override
   Widget build(BuildContext context) {
     return Row(
       mainAxisSize: MainAxisSize.min,
       children: [
-        Text(value.toStringAsFixed(value >= 10 ? 0 : 1), style: valueStyle),
-        const SizedBox(width: 2),
-        Text(unit, style: labelStyle),
+        SizedBox(
+          width: 52,
+          child: Text(label, style: labelStyle),
+        ),
+        Text('${value.toStringAsFixed(1)}g', style: valueStyle),
       ],
     );
   }
