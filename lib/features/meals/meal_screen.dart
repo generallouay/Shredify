@@ -3,15 +3,12 @@ import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
-import '../../core/models/food.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/meal_food_item.dart';
 import '../../core/models/macro_totals.dart';
 import '../../core/providers/meals_provider.dart';
 import '../../core/providers/database_provider.dart';
-import 'widgets/food_selector_sheet.dart';
 import 'widgets/meal_food_item_card.dart';
-import 'widgets/measurement_dialog.dart';
 
 class MealScreen extends ConsumerStatefulWidget {
   final String? mealId;
@@ -56,26 +53,11 @@ class _MealScreenState extends ConsumerState<MealScreen> {
   }
 
   Future<void> _addFood() async {
-    final food = await showModalBottomSheet<Food>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: const Color(0xFF1C1C1E),
-      shape: const RoundedRectangleBorder(
-          borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-      builder: (_) => const FoodSelectorSheet(),
-    );
-    if (food == null || !mounted) return;
-
-    final item = await showDialog<MealFoodItem>(
-      context: context,
-      builder: (_) => MeasurementDialog(food: food),
-    );
-    if (item == null) return;
-
+    final items = await context.push<List<MealFoodItem>>('/foods/select');
+    if (items == null || items.isEmpty || !mounted) return;
     setState(() {
-      _items.add(item.copyWith(
-        id: const Uuid().v4(),
-        mealId: _original?.id ?? '',
+      _items.addAll(items.map(
+        (i) => i.copyWith(id: const Uuid().v4(), mealId: _original?.id ?? ''),
       ));
       _calculated = false;
     });

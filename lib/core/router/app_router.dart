@@ -5,6 +5,7 @@ import '../../features/foods/foods_screen.dart';
 import '../../features/foods/food_detail_screen.dart';
 import '../../features/meals/meal_screen.dart';
 import '../../features/meals/meal_history_screen.dart';
+import '../../features/meals/food_selector_page.dart';
 import '../../features/daily/daily_screen.dart';
 import '../../features/settings/settings_screen.dart';
 
@@ -54,5 +55,8 @@ final appRouter = GoRouter(
     GoRoute(
         path: '/settings',
         builder: (_, __) => const SettingsScreen()),
+    GoRoute(
+        path: '/foods/select',
+        builder: (_, __) => const FoodSelectorPage()),
   ],
 );
