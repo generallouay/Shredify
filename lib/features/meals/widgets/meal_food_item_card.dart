@@ -1,0 +1,181 @@
+import 'dart:io';
+import 'package:flutter/material.dart';
+import '../../../core/models/meal_food_item.dart';
+
+class MealFoodItemCard extends StatelessWidget {
+  final MealFoodItem item;
+  final bool showMacros;
+  final ValueChanged<double>? onWeightAfterChanged;
+  final VoidCallback? onDelete;
+
+  const MealFoodItemCard({
+    super.key,
+    required this.item,
+    this.showMacros = false,
+    this.onWeightAfterChanged,
+    this.onDelete,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final macros = item.macros;
+    final food = item.food;
+
+    return Card(
+      child: Padding(
+        padding: const EdgeInsets.all(12),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Thumbnail
+            if (food?.photoPath != null && File(food!.photoPath!).existsSync())
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.file(File(food.photoPath!),
+                    width: 48, height: 48, fit: BoxFit.cover),
+              )
+            else
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF2C2C2E),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(Icons.fastfood_outlined,
+                    size: 20, color: Colors.white38),
+              ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    food?.name ?? 'Unknown food',
+                    style: const TextStyle(fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 4),
+                  _MeasurementInfo(item: item),
+                  // Weight-after input for container mode
+                  if (item.method == MeasurementMethod.container &&
+                      item.weightAfter == null &&
+                      onWeightAfterChanged != null) ...[
+                    const SizedBox(height: 8),
+                    _WeightAfterInput(onSubmit: onWeightAfterChanged!),
+                  ],
+                  // Macros
+                  if (showMacros && macros != null) ...[
+                    const SizedBox(height: 6),
+                    _MacroLine(macros: macros),
+                  ],
+                  if (showMacros && macros == null && item.method == MeasurementMethod.container)
+                    const Padding(
+                      padding: EdgeInsets.only(top: 6),
+                      child: Text('Enter weight after to calculate',
+                          style: TextStyle(
+                              fontSize: 11, color: Colors.orange)),
+                    ),
+                ],
+              ),
+            ),
+            if (onDelete != null)
+              IconButton(
+                icon: const Icon(Icons.delete_outline,
+                    size: 18, color: Colors.white38),
+                onPressed: onDelete,
+                padding: EdgeInsets.zero,
+                constraints: const BoxConstraints(),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MeasurementInfo extends StatelessWidget {
+  final MealFoodItem item;
+  const _MeasurementInfo({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final style =
+        const TextStyle(fontSize: 12, color: Colors.white54);
+    return switch (item.method) {
+      MeasurementMethod.standard => Text(
+          '${item.weightGrams?.toStringAsFixed(0) ?? '?'}g',
+          style: style),
+      MeasurementMethod.container => Text(
+          'Before: ${item.weightBefore?.toStringAsFixed(0) ?? '?'}g'
+          '${item.weightAfter != null ? '  •  After: ${item.weightAfter!.toStringAsFixed(0)}g  •  Consumed: ${item.consumedGrams?.toStringAsFixed(0) ?? '?'}g' : ''}',
+          style: style),
+      MeasurementMethod.canister => Text(
+          '${item.canCount ?? '?'} can${(item.canCount ?? 0) != 1 ? 's' : ''}  •  ${item.consumedGrams?.toStringAsFixed(0) ?? '?'}g',
+          style: style),
+    };
+  }
+}
+
+class _WeightAfterInput extends StatefulWidget {
+  final ValueChanged<double> onSubmit;
+  const _WeightAfterInput({required this.onSubmit});
+
+  @override
+  State<_WeightAfterInput> createState() => _WeightAfterInputState();
+}
+
+class _WeightAfterInputState extends State<_WeightAfterInput> {
+  final _ctrl = TextEditingController();
+
+  @override
+  void dispose() {
+    _ctrl.dispose();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      children: [
+        Expanded(
+          child: TextField(
+            controller: _ctrl,
+            keyboardType:
+                const TextInputType.numberWithOptions(decimal: true),
+            decoration: const InputDecoration(
+              hintText: 'Weight after eating (g)',
+              suffixText: 'g',
+              isDense: true,
+              contentPadding:
+                  EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+            ),
+          ),
+        ),
+        const SizedBox(width: 8),
+        TextButton(
+          onPressed: () {
+            final v = double.tryParse(_ctrl.text);
+            if (v != null) widget.onSubmit(v);
+          },
+          child: const Text('Set'),
+        ),
+      ],
+    );
+  }
+}
+
+class _MacroLine extends StatelessWidget {
+  final dynamic macros;
+  const _MacroLine({required this.macros});
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(
+      '${macros.kcal.toStringAsFixed(0)} kcal  •  P ${macros.protein.toStringAsFixed(1)}g  •  C ${macros.carbs.toStringAsFixed(1)}g  •  F ${macros.fat.toStringAsFixed(1)}g',
+      style: TextStyle(
+          fontSize: 12,
+          color: Theme.of(context).colorScheme.primary,
+          fontWeight: FontWeight.w500),
+    );
+  }
+}
