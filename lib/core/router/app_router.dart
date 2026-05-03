@@ -56,7 +56,7 @@ final appRouter = GoRouter(
         path: '/settings',
         builder: (_, __) => const SettingsScreen()),
     GoRoute(
-        path: '/foods/select',
+        path: '/food-selector',
         builder: (_, __) => const FoodSelectorPage()),
   ],
 );

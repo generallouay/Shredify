@@ -13,7 +13,12 @@ class AppDatabase {
 
   Future<Database> _init() async {
     final path = join(await getDatabasesPath(), 'shredify.db');
-    return openDatabase(path, version: 1, onCreate: _onCreate);
+    return openDatabase(
+      path,
+      version: 2,
+      onCreate: _onCreate,
+      onUpgrade: _onUpgrade,
+    );
   }
 
   Future<void> _onCreate(Database db, int version) async {
@@ -52,6 +57,27 @@ class AppDatabase {
     ''');
     await db.execute(
         'CREATE INDEX idx_mfi_meal ON meal_food_items(meal_id)');
+    await _createQuickEntriesTable(db);
+  }
+
+  Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
+    if (oldVersion < 2) {
+      await _createQuickEntriesTable(db);
+    }
+  }
+
+  Future<void> _createQuickEntriesTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS quick_entries (
+        id TEXT PRIMARY KEY,
+        created_at INTEGER NOT NULL,
+        kcal REAL NOT NULL,
+        protein REAL,
+        carbs REAL,
+        fat REAL,
+        description TEXT
+      )
+    ''');
   }
 
   Future<String> get dbPath async =>

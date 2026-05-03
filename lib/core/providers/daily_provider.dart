@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/meal.dart';
 import '../models/macro_totals.dart';
 import 'meals_provider.dart';
+import 'quick_entries_provider.dart';
 
 final selectedDayProvider = StateProvider<DateTime>(
     (ref) => DateTime.now());
@@ -25,5 +26,10 @@ final dailyMealsProvider =
 final dailyTotalsProvider =
     Provider.family<MacroTotals, DateTime>((ref, day) {
   final meals = ref.watch(dailyMealsProvider(day));
-  return meals.fold(MacroTotals.zero, (acc, m) => acc + m.totals);
+  final entries = ref.watch(dailyQuickEntriesProvider(day));
+  final mealTotals =
+      meals.fold(MacroTotals.zero, (acc, m) => acc + m.totals);
+  final entryTotals = entries.fold(
+      MacroTotals.zero, (acc, e) => acc + quickEntryToMacros(e));
+  return mealTotals + entryTotals;
 });

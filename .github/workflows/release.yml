@@ -1,0 +1,71 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v[0-9]*'
+
+jobs:
+  build-and-release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Extract version
+        run: echo "VERSION=${GITHUB_REF_NAME#v}" >> "$GITHUB_ENV"
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          channel: stable
+          cache: true
+          cache-key: flutter-${{ hashFiles('pubspec.lock') }}
+
+      - name: Stamp version into pubspec.yaml
+        run: |
+          sed -i "s/^version:.*/version: ${{ env.VERSION }}+${{ github.run_number }}/" pubspec.yaml
+
+      - name: Get dependencies
+        run: flutter pub get
+
+      - name: Set up signing keystore
+        if: ${{ secrets.KEYSTORE_BASE64 != '' }}
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > android/app/keystore.jks
+          cat > android/key.properties <<EOF
+          storePassword=${{ secrets.KEYSTORE_PASSWORD }}
+          keyPassword=${{ secrets.KEY_PASSWORD }}
+          keyAlias=${{ secrets.KEY_ALIAS }}
+          storeFile=keystore.jks
+          EOF
+
+      - name: Build release APK
+        run: flutter build apk --release
+
+      - name: Rename APK
+        run: |
+          mv build/app/outputs/flutter-apk/app-release.apk \
+             build/app/outputs/flutter-apk/Shredify-v${{ env.VERSION }}.apk
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          name: Shredify v${{ env.VERSION }}
+          body: |
+            ## Shredify v${{ env.VERSION }}
+
+            ### Install
+            Download `Shredify-v${{ env.VERSION }}.apk`, enable *Install from unknown sources* on your device, and open the file.
+
+            > Built from commit ${{ github.sha }}
+          files: build/app/outputs/flutter-apk/Shredify-v${{ env.VERSION }}.apk

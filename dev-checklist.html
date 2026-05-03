@@ -1,0 +1,1097 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Dev Checklist — Louay</title>
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+:root {
+  --bg:       #0b0c0f;
+  --surface:  #0f1117;
+  --surface2: #13151d;
+  --border:   #1c1e28;
+  --border2:  #242736;
+  --accent:   #7c6dfa;
+  --accent2:  #4ecdc4;
+  --accent3:  #f7b731;
+  --red:      #ff6b6b;
+  --green:    #6ee7b7;
+  --blue:     #82aaff;
+  --text:     #c4c8d8;
+  --text2:    #7a7f96;
+  --muted:    #3d4058;
+  --subtle:   #1e2130;
+
+  --syn-kw:   #c792ea;
+  --syn-type: #82aaff;
+  --syn-str:  #c3e88d;
+  --syn-cmt:  #4a5568;
+  --syn-num:  #f78c6c;
+  --syn-attr: #ffcb6b;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{background:var(--bg);color:var(--text);font-family:'Syne',sans-serif;min-height:100vh;line-height:1.6;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:var(--muted);border-radius:3px;}
+
+/* ── Layout ── */
+.app{display:flex;min-height:100vh;}
+nav{width:230px;flex-shrink:0;background:var(--surface);border-right:1px solid var(--border);position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;}
+main{flex:1;max-width:860px;padding:48px 40px 100px;}
+
+/* ── Nav ── */
+.nav-logo{padding:24px 20px 16px;border-bottom:1px solid var(--border);}
+.nav-logo h1{font-size:13px;font-weight:700;color:#e4e8f5;letter-spacing:-.01em;}
+.nav-logo p{font-size:10px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace;}
+.nav-section-label{font-size:9px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);padding:16px 20px 6px;}
+.nav-item{display:flex;align-items:center;gap:8px;padding:7px 20px;cursor:pointer;font-size:11px;color:var(--text2);border-left:2px solid transparent;transition:all .15s;text-decoration:none;font-family:'JetBrains Mono',monospace;}
+.nav-item:hover{color:var(--text);background:var(--surface2);}
+.nav-item.active{color:var(--accent);border-left-color:var(--accent);background:#7c6dfa0d;}
+.nav-item .nav-badge{margin-left:auto;font-size:9px;padding:1px 6px;border-radius:10px;background:var(--subtle);color:var(--muted);}
+.nav-item.active .nav-badge{background:#7c6dfa22;color:var(--accent);}
+.nav-progress{margin:auto 0 0;padding:16px 20px;border-top:1px solid var(--border);}
+.nav-progress-label{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:8px;font-family:'JetBrains Mono',monospace;}
+.nav-progress-bar{height:3px;background:var(--subtle);border-radius:2px;overflow:hidden;}
+.nav-progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:2px;transition:width .4s cubic-bezier(.4,0,.2,1);}
+.nav-progress-text{font-size:10px;color:var(--text2);margin-top:6px;font-family:'JetBrains Mono',monospace;}
+
+/* ── Page header ── */
+.page-header{margin-bottom:44px;}
+.page-eyebrow{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);margin-bottom:12px;font-family:'JetBrains Mono',monospace;}
+.page-title{font-size:28px;font-weight:800;color:#e8ecf8;letter-spacing:-.03em;line-height:1.2;margin-bottom:10px;}
+.page-title span{background:linear-gradient(90deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;}
+.page-sub{font-size:12px;color:var(--text2);max-width:520px;line-height:1.7;}
+
+/* ── Section ── */
+.section{margin-bottom:8px;border:1px solid var(--border);border-radius:8px;overflow:hidden;transition:border-color .2s;}
+.section:hover{border-color:var(--border2);}
+.section-header{display:flex;align-items:center;gap:12px;padding:14px 18px;cursor:pointer;background:var(--surface);user-select:none;transition:background .15s;}
+.section-header:hover{background:var(--surface2);}
+.section-icon{font-size:14px;width:24px;flex-shrink:0;text-align:center;}
+.section-meta{flex:1;}
+.section-title{font-size:12px;font-weight:600;color:#c8ccde;letter-spacing:-.01em;}
+.section-desc{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5;}
+.section-done{font-size:10px;padding:2px 9px;border-radius:20px;border:1px solid var(--border2);color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap;}
+.section-done.all{border-color:#6ee7b744;color:var(--green);background:#6ee7b710;}
+.section-chevron{font-size:9px;color:var(--muted);transition:transform .2s;}
+.section-chevron.open{transform:rotate(180deg);}
+.section-body{border-top:1px solid var(--border);background:var(--bg);}
+
+/* ── Item row ── */
+.item{display:flex;align-items:flex-start;gap:12px;padding:10px 18px;cursor:pointer;transition:background .1s;border-bottom:1px solid #ffffff04;}
+.item:last-child{border-bottom:none;}
+.item:hover{background:#ffffff03;}
+.item.done .item-text{color:var(--muted);text-decoration:line-through;}
+.checkbox{width:16px;height:16px;flex-shrink:0;margin-top:2px;border:1.5px solid var(--muted);border-radius:3px;display:flex;align-items:center;justify-content:center;transition:all .15s;}
+.checkbox.checked{border-color:var(--green);background:#6ee7b712;}
+.checkbox.checked::after{content:'✓';font-size:9px;color:var(--green);font-weight:700;}
+.item-text{font-size:11.5px;color:var(--text2);line-height:1.65;font-family:'JetBrains Mono',monospace;}
+
+/* ── Code reference block ── */
+.code-ref{margin-top:0;background:var(--bg);}
+.code-ref-header{display:flex;align-items:center;gap:10px;padding:10px 18px;border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--surface2);}
+.code-ref-title{font-size:10px;color:var(--accent3);font-family:'JetBrains Mono',monospace;letter-spacing:.04em;}
+.code-ref-file{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-left:auto;}
+.code-tabs{display:flex;gap:0;border-bottom:1px solid var(--border);}
+.code-tab{background:none;border:none;border-bottom:2px solid transparent;padding:8px 18px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);transition:all .15s;}
+.code-tab:hover{color:var(--text);}
+.code-tab.active{color:var(--accent3);border-bottom-color:var(--accent3);}
+.code-panel{display:none;position:relative;}
+.code-panel.active{display:block;}
+pre{padding:16px 18px;overflow-x:auto;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.75;color:var(--text2);}
+.copy-btn{position:absolute;top:8px;right:12px;background:var(--surface2);border:1px solid var(--border2);color:var(--muted);padding:3px 10px;border-radius:3px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:9px;transition:all .15s;}
+.copy-btn:hover{color:var(--text);border-color:var(--border);}
+.copy-btn.ok{color:var(--green);border-color:var(--green);}
+
+/* syntax */
+.kw{color:var(--syn-kw);}
+.ty{color:var(--syn-type);}
+.st{color:var(--syn-str);}
+.cm{color:var(--syn-cmt);font-style:italic;}
+.nu{color:var(--syn-num);}
+.at{color:var(--syn-attr);}
+.me{color:#82aaff;}
+
+/* ── Platform tab ── */
+.tab-row{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:16px;}
+.plat-tab{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 13px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;transition:all .15s;}
+.plat-tab:hover{color:var(--text);border-color:var(--border2);}
+.plat-tab.active{border-color:#67e8f944;color:var(--accent2);background:#67e8f90a;}
+.plat-panel{display:none;}
+.plat-panel.active{display:block;}
+
+/* ── Toolbar ── */
+.toolbar{display:flex;gap:8px;align-items:center;margin-bottom:24px;flex-wrap:wrap;}
+.filter-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 13px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;transition:all .15s;}
+.filter-btn:hover{color:var(--text);border-color:var(--border2);}
+.filter-btn.active{border-color:var(--border2);color:var(--text);}
+.reset-btn{background:none;border:1px solid var(--border);color:var(--muted);padding:5px 13px;border-radius:4px;cursor:pointer;font-family:'JetBrains Mono',monospace;font-size:10px;transition:all .15s;margin-left:auto;}
+.reset-btn:hover{color:var(--red);border-color:var(--red);}
+
+/* ── Updater special section ── */
+.updater-banner{background:linear-gradient(135deg,#7c6dfa11,#4ecdc411);border:1px solid #7c6dfa33;border-radius:8px;padding:16px 20px;margin-bottom:8px;display:flex;align-items:flex-start;gap:14px;}
+.updater-icon{font-size:20px;flex-shrink:0;margin-top:2px;}
+.updater-body h3{font-size:13px;font-weight:600;color:#c8ccde;margin-bottom:4px;}
+.updater-body p{font-size:11px;color:var(--text2);line-height:1.7;}
+.updater-body .ref-link{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--accent);margin-top:6px;display:inline-block;}
+
+/* ── h2 section titles ── */
+h2.section-group{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin:36px 0 12px;display:flex;align-items:center;gap:10px;}
+h2.section-group::after{content:'';flex:1;height:1px;background:var(--border);}
+
+/* ── Ship footer ── */
+.ship-footer{margin-top:48px;text-align:center;font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);padding:20px 0;border-top:1px solid var(--border);}
+.ship-footer.done{color:var(--green);}
+</style>
+</head>
+<body>
+<div class="app">
+
+<!-- ── Navigation ── -->
+<nav id="nav">
+  <div class="nav-logo">
+    <h1>Dev Checklist</h1>
+    <p>louay · standard practice</p>
+  </div>
+
+  <div class="nav-section-label">Generic</div>
+  <a class="nav-item" href="#sec-errors"  onclick="setActive(this)"><span>⚠</span> Error Handling    <span class="nav-badge" id="nb-errors">0</span></a>
+  <a class="nav-item" href="#sec-logging" onclick="setActive(this)"><span>◈</span> Logging           <span class="nav-badge" id="nb-logging">0</span></a>
+  <a class="nav-item" href="#sec-vcs"     onclick="setActive(this)"><span>⌥</span> Version Control   <span class="nav-badge" id="nb-vcs">0</span></a>
+  <a class="nav-item" href="#sec-releases"onclick="setActive(this)"><span>◇</span> Releases          <span class="nav-badge" id="nb-releases">0</span></a>
+  <a class="nav-item" href="#sec-cicd"    onclick="setActive(this)"><span>⟳</span> CI/CD             <span class="nav-badge" id="nb-cicd">0</span></a>
+  <a class="nav-item" href="#sec-config"  onclick="setActive(this)"><span>⚿</span> Config & Secrets  <span class="nav-badge" id="nb-config">0</span></a>
+  <a class="nav-item" href="#sec-security"onclick="setActive(this)"><span>🔒</span> Security          <span class="nav-badge" id="nb-security">0</span></a>
+  <a class="nav-item" href="#sec-api"     onclick="setActive(this)"><span>⇄</span> API Limits        <span class="nav-badge" id="nb-api">0</span></a>
+  <a class="nav-item" href="#sec-ux"      onclick="setActive(this)"><span>◎</span> UX & Performance  <span class="nav-badge" id="nb-ux">0</span></a>
+  <a class="nav-item" href="#sec-privacy" onclick="setActive(this)"><span>⊙</span> Privacy & GDPR   <span class="nav-badge" id="nb-privacy">0</span></a>
+  <a class="nav-item" href="#sec-updater" onclick="setActive(this)"><span>↑</span> Auto-Updater      <span class="nav-badge" id="nb-updater">0</span></a>
+  <a class="nav-item" href="#sec-quality" onclick="setActive(this)"><span>◉</span> Code Quality      <span class="nav-badge" id="nb-quality">0</span></a>
+  <a class="nav-item" href="#sec-handoff" onclick="setActive(this)"><span>⇥</span> Handoff & Iter.  <span class="nav-badge" id="nb-handoff">0</span></a>
+  <a class="nav-item" href="#sec-docs"    onclick="setActive(this)"><span>☰</span> Docs              <span class="nav-badge" id="nb-docs">0</span></a>
+  <a class="nav-item" href="#sec-ops"     onclick="setActive(this)"><span>⊞</span> Ops               <span class="nav-badge" id="nb-ops">0</span></a>
+
+  <div class="nav-section-label">Platform</div>
+  <a class="nav-item" href="#sec-platform" onclick="setActive(this)"><span>⬡</span> Platform-Specific</a>
+
+  <div class="nav-progress">
+    <div class="nav-progress-label">Overall</div>
+    <div class="nav-progress-bar"><div class="nav-progress-fill" id="global-bar" style="width:0%"></div></div>
+    <div class="nav-progress-text" id="global-text">0 / 0</div>
+  </div>
+</nav>
+
+<!-- ── Main ── -->
+<main>
+  <div class="page-header">
+    <div class="page-eyebrow">standard practice · platform agnostic</div>
+    <div class="page-title">The <span>Dev Checklist</span></div>
+    <div class="page-sub">Azure Function, Next.js, .NET WinForms, Flutter, Kotlin — doesn't matter. Run this before every ship.</div>
+  </div>
+
+  <div class="toolbar">
+    <button class="filter-btn active" onclick="setFilter('all',this)">all</button>
+    <button class="filter-btn"        onclick="setFilter('pending',this)">pending</button>
+    <button class="filter-btn"        onclick="setFilter('done',this)">done</button>
+    <button class="reset-btn"         onclick="resetAll()">reset all</button>
+  </div>
+
+  <h2 class="section-group">Core</h2>
+
+  <!-- ERROR HANDLING -->
+  <div class="section" id="sec-errors">
+    <div class="section-header" onclick="toggleSection('errors')">
+      <span class="section-icon">⚠</span>
+      <div class="section-meta">
+        <div class="section-title">Error Handling</div>
+        <div class="section-desc">All failure paths are explicitly handled — not assumed.</div>
+      </div>
+      <span class="section-done" id="sd-errors">0/5</span>
+      <span class="section-chevron open" id="chev-errors">▼</span>
+    </div>
+    <div class="section-body" id="body-errors">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">All operations that can fail are wrapped in error handling (try/catch, Result types, etc.)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Errors are surfaced meaningfully — not swallowed silently</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">The user or caller receives a clear, actionable signal on failure</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Edge cases handled: null/empty input, timeouts, unexpected state</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A global / unhandled exception handler exists as a last resort</div></div>
+    </div>
+  </div>
+
+  <!-- LOGGING -->
+  <div class="section" id="sec-logging">
+    <div class="section-header" onclick="toggleSection('logging')">
+      <span class="section-icon">◈</span>
+      <div class="section-meta">
+        <div class="section-title">Developer Logging</div>
+        <div class="section-desc">Enough signal to debug any issue in any environment.</div>
+      </div>
+      <span class="section-done" id="sd-logging">0/5</span>
+      <span class="section-chevron open" id="chev-logging">▼</span>
+    </div>
+    <div class="section-body" id="body-logging">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Structured logs exist for key operations and failure points</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Log levels used correctly (debug / info / warn / error)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Logs include enough context to trace issues without a debugger attached</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">No sensitive data (credentials, PII, tokens) is logged anywhere</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Logs are accessible in the deployment environment, not just local console</div></div>
+    </div>
+  </div>
+
+  <h2 class="section-group">Source Control & Delivery</h2>
+
+  <!-- VCS -->
+  <div class="section" id="sec-vcs">
+    <div class="section-header" onclick="toggleSection('vcs')">
+      <span class="section-icon">⌥</span>
+      <div class="section-meta">
+        <div class="section-title">Version Control & Branching</div>
+        <div class="section-desc">The repo tells the full story of every change.</div>
+      </div>
+      <span class="section-done" id="sd-vcs">0/5</span>
+      <span class="section-chevron open" id="chev-vcs">▼</span>
+    </div>
+    <div class="section-body" id="body-vcs">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A branching strategy is defined and followed (e.g. main = stable, feature branches = WIP)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Commits are atomic and have meaningful messages</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Secrets, credentials, and local config files are excluded from source control</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">An ignore file (.gitignore or equivalent) is present and appropriate for the stack</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">The main/default branch is protected from direct pushes</div></div>
+    </div>
+  </div>
+
+  <!-- RELEASES -->
+  <div class="section" id="sec-releases">
+    <div class="section-header" onclick="toggleSection('releases')">
+      <span class="section-icon">◇</span>
+      <div class="section-meta">
+        <div class="section-title">Releases & Versioning</div>
+        <div class="section-desc">Every release is deliberate, traceable, and reproducible.</div>
+      </div>
+      <span class="section-done" id="sd-releases">0/5</span>
+      <span class="section-chevron open" id="chev-releases">▼</span>
+    </div>
+    <div class="section-body" id="body-releases">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A versioning convention is defined and followed (e.g. SemVer: v1.2.3)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A tag or marker on a commit explicitly signals intent to release (not every push deploys)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Release builds are clearly distinct from development/debug builds</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A changelog or release notes are maintained per release</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Any release artifact is versioned and traceable back to its source commit</div></div>
+    </div>
+  </div>
+
+  <!-- CI/CD -->
+  <div class="section" id="sec-cicd">
+    <div class="section-header" onclick="toggleSection('cicd')">
+      <span class="section-icon">⟳</span>
+      <div class="section-meta">
+        <div class="section-title">Automated Build & Publish</div>
+        <div class="section-desc">No manual steps between a commit and a shipped artifact.</div>
+      </div>
+      <span class="section-done" id="sd-cicd">0/8</span>
+      <span class="section-chevron open" id="chev-cicd">▼</span>
+    </div>
+    <div class="section-body" id="body-cicd">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A CI pipeline exists and runs automatically on push or pull request</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">The publish/deploy workflow is fully automated — no manual steps to ship</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Release builds are triggered by a specific signal (e.g. a git version tag)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Non-release pushes build and test but do not publish or deploy</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Build failures block merges or deploys — the pipeline is the gatekeeper</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Pipeline configuration lives in the repo alongside the code</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Dependencies and build outputs are cached in CI to speed up runs</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Cache is keyed on the lockfile hash — stale cache never silently breaks the build</div></div>
+    </div>
+  </div>
+
+  <h2 class="section-group">Security & Config</h2>
+
+  <!-- CONFIG -->
+  <div class="section" id="sec-config">
+    <div class="section-header" onclick="toggleSection('config')">
+      <span class="section-icon">⚿</span>
+      <div class="section-meta">
+        <div class="section-title">Configuration & Secrets</div>
+        <div class="section-desc">Config is environment-aware. Secrets never touch the codebase.</div>
+      </div>
+      <span class="section-done" id="sd-config">0/5</span>
+      <span class="section-chevron open" id="chev-config">▼</span>
+    </div>
+    <div class="section-body" id="body-config">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">All environment-specific values are externalized — nothing hardcoded</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A documented example config file exists (.env.example, appsettings.example.json, etc.)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Secrets are injected at runtime via a secure store (vault, CI secrets, env vars)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">The app handles missing or invalid config gracefully at startup</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Config is validated early — fail fast with a clear message if misconfigured</div></div>
+    </div>
+  </div>
+
+  <!-- SECURITY -->
+  <div class="section" id="sec-security">
+    <div class="section-header" onclick="toggleSection('security')">
+      <span class="section-icon">🔒</span>
+      <div class="section-meta">
+        <div class="section-title">Security</div>
+        <div class="section-desc">Inputs are untrusted. Access is explicitly granted, not assumed.</div>
+      </div>
+      <span class="section-done" id="sd-security">0/7</span>
+      <span class="section-chevron open" id="chev-security">▼</span>
+    </div>
+    <div class="section-body" id="body-security">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">All user input is validated and sanitized before use</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Authentication and authorization are implemented correctly and consistently</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Sensitive data is encrypted at rest and in transit</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Dependencies are audited for known vulnerabilities</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">No secrets, tokens, or credentials are ever committed to the repo</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Principle of least privilege applied to services, roles, and API keys</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Rate limiting or abuse prevention exists on any externally exposed interface</div></div>
+    </div>
+  </div>
+
+  <!-- API LIMITS -->
+  <div class="section" id="sec-api">
+    <div class="section-header" onclick="toggleSection('api')">
+      <span class="section-icon">⇄</span>
+      <div class="section-meta">
+        <div class="section-title">API & Integration Limits</div>
+        <div class="section-desc">Third-party limits are known, respected, and handled gracefully.</div>
+      </div>
+      <span class="section-done" id="sd-api">0/6</span>
+      <span class="section-chevron open" id="chev-api">▼</span>
+    </div>
+    <div class="section-body" id="body-api">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">All external API rate limits are known and documented</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Rate limit errors (e.g. 429) are handled explicitly — not treated as generic failures</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Retry logic is implemented with exponential backoff where appropriate</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">API quotas (daily/monthly) are monitored and alerted on before exhaustion</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Pagination is handled correctly — no assumption that first page = full result</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">API keys and credentials are rotatable without redeploying the app</div></div>
+    </div>
+  </div>
+
+  <h2 class="section-group">UX & Compliance</h2>
+
+  <!-- UX -->
+  <div class="section" id="sec-ux">
+    <div class="section-header" onclick="toggleSection('ux')">
+      <span class="section-icon">◎</span>
+      <div class="section-meta">
+        <div class="section-title">UX & Performance</div>
+        <div class="section-desc">Fast, clear, and handles every state — not just the happy path.</div>
+      </div>
+      <span class="section-done" id="sd-ux">0/7</span>
+      <span class="section-chevron open" id="chev-ux">▼</span>
+    </div>
+    <div class="section-body" id="body-ux">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Loading states shown during async operations — no blank or frozen UI</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Skeleton screens or placeholders used for content-heavy loads</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Empty states handled gracefully — meaningful message, not a blank screen</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Error states are shown inline — user knows what failed and what to do next</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">The app is responsive and tested on relevant screen sizes / form factors</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Performance baseline measured (bundle size, startup time, render time, Lighthouse)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">No unnecessary re-renders, redundant network calls, or blocking on the main thread</div></div>
+    </div>
+  </div>
+
+  <!-- PRIVACY -->
+  <div class="section" id="sec-privacy">
+    <div class="section-header" onclick="toggleSection('privacy')">
+      <span class="section-icon">⊙</span>
+      <div class="section-meta">
+        <div class="section-title">Privacy, GDPR & Compliance</div>
+        <div class="section-desc">User data is handled lawfully, minimally, and transparently.</div>
+      </div>
+      <span class="section-done" id="sd-privacy">0/7</span>
+      <span class="section-chevron open" id="chev-privacy">▼</span>
+    </div>
+    <div class="section-body" id="body-privacy">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Only data that is strictly necessary is collected</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A legal basis for processing personal data is established (consent, contract, etc.)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Users can request access to, correction of, or deletion of their data</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Cookie consent fires before any non-essential cookies or trackers are set</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A privacy policy exists and is accessible from the product</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Third-party services are evaluated for GDPR compliance (data processors listed)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Data retention periods are defined — data is deleted when no longer needed</div></div>
+    </div>
+  </div>
+
+  <h2 class="section-group">Distribution & Updates</h2>
+
+  <!-- AUTO-UPDATER -->
+  <div class="section" id="sec-updater">
+    <div class="section-header" onclick="toggleSection('updater')">
+      <span class="section-icon">↑</span>
+      <div class="section-meta">
+        <div class="section-title">Auto-Updater</div>
+        <div class="section-desc">Users always run the latest version with minimal friction.</div>
+      </div>
+      <span class="section-done" id="sd-updater">0/8</span>
+      <span class="section-chevron open" id="chev-updater">▼</span>
+    </div>
+    <div class="section-body" id="body-updater">
+      <div class="updater-banner">
+        <div class="updater-icon">🔄</div>
+        <div class="updater-body">
+          <h3>Pattern: GitHub Releases + Silent Installer</h3>
+          <p>Check GitHub API on startup → compare versions → download installer to %TEMP% → run silently with /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS → app exits and relaunches on its own. User sees a progress bar and three choices: Update Now, Ignore, Never ask again (persisted per version).</p>
+          <span class="ref-link">↓ Reference implementation below (Updater.cs + UpdateDialog.cs)</span>
+        </div>
+      </div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Update check runs on startup — silently, on a background thread, never blocking the UI</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Version comparison is correct — current vs. latest, parsed reliably (e.g. System.Version)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">User can choose: update now, ignore this time, or never ask again for this version</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">"Never ask again" preference is persisted per version (registry, prefs file, shared prefs, etc.)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Download happens in the background with a visible progress indicator</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Installer/package runs silently and handles close → install → relaunch automatically</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Update check fails gracefully — no crash, no dialog if there's no network</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Release asset naming is consistent and matches what the updater constructs as the download URL</div></div>
+
+      <!-- Code reference -->
+      <div class="code-ref">
+        <div class="code-ref-header">
+          <span class="code-ref-title">Reference Implementation</span>
+          <span class="code-ref-file">custom-volume-mixer · generallouay</span>
+        </div>
+        <div class="code-tabs">
+          <button class="code-tab active" onclick="switchTab(event,'updater-cs')">Updater.cs</button>
+          <button class="code-tab"        onclick="switchTab(event,'dialog-cs')">UpdateDialog.cs</button>
+        </div>
+        <div class="code-panel active" id="panel-updater-cs">
+          <button class="copy-btn" onclick="copyPanel('updater-cs',this)">copy</button>
+          <pre id="code-updater-cs"><span class="kw">using</span> System;
+<span class="kw">using</span> System.Diagnostics;
+<span class="kw">using</span> System.Net;
+<span class="kw">using</span> System.IO;
+<span class="kw">using</span> System.Text;
+<span class="kw">using</span> Microsoft.Win32;
+
+<span class="kw">namespace</span> <span class="ty">VolumeMixer</span>
+{
+    <span class="kw">public</span> <span class="kw">class</span> <span class="ty">UpdateInfo</span>
+    {
+        <span class="kw">public</span> <span class="kw">string</span> LatestVersion { <span class="kw">get</span>; <span class="kw">set</span>; }  <span class="cm">// e.g. "v1.2.0"</span>
+        <span class="kw">public</span> <span class="kw">string</span> DownloadUrl   { <span class="kw">get</span>; <span class="kw">set</span>; }  <span class="cm">// release page</span>
+        <span class="kw">public</span> <span class="kw">string</span> ReleaseNotes  { <span class="kw">get</span>; <span class="kw">set</span>; }
+    }
+
+    <span class="kw">public</span> <span class="kw">static</span> <span class="kw">class</span> <span class="ty">Updater</span>
+    {
+        <span class="cm">// ── Change these if you ever rename the repo ──────────────────────</span>
+        <span class="kw">private</span> <span class="kw">const</span> <span class="kw">string</span> Owner  = <span class="st">"generallouay"</span>;
+        <span class="kw">private</span> <span class="kw">const</span> <span class="kw">string</span> Repo   = <span class="st">"custom-volume-mixer"</span>;
+        <span class="kw">private</span> <span class="kw">const</span> <span class="kw">string</span> ApiUrl = <span class="st">"https://api.github.com/repos/"</span> + Owner + <span class="st">"/"</span> + Repo + <span class="st">"/releases/latest"</span>;
+
+        <span class="cm">// Registry key for "never ask again"</span>
+        <span class="kw">private</span> <span class="kw">const</span> <span class="kw">string</span> REG_KEY      = <span class="st">@"Software\VolumeMixer"</span>;
+        <span class="kw">private</span> <span class="kw">const</span> <span class="kw">string</span> REG_SKIP_VER = <span class="st">"SkipUpdateVersion"</span>;
+
+        <span class="cm">// Current app version — bump this with every release</span>
+        <span class="kw">public</span> <span class="kw">static</span> <span class="kw">readonly</span> <span class="ty">Version</span> CurrentVersion = <span class="kw">new</span> <span class="ty">Version</span>(<span class="nu">2</span>, <span class="nu">0</span>, <span class="nu">4</span>);
+
+        <span class="cm">// Returns null if up to date, network error, or user said never.</span>
+        <span class="kw">public</span> <span class="kw">static</span> <span class="ty">UpdateInfo</span> <span class="me">CheckForUpdate</span>()
+        {
+            <span class="kw">string</span> skipVer = <span class="me">ReadSkipVersion</span>();
+            <span class="kw">try</span>
+            {
+                <span class="kw">string</span> json = <span class="me">FetchJson</span>(ApiUrl);
+                <span class="kw">string</span> tag  = <span class="me">ExtractField</span>(json, <span class="st">"tag_name"</span>);
+                <span class="kw">string</span> html = <span class="me">ExtractField</span>(json, <span class="st">"html_url"</span>);
+                <span class="kw">string</span> body = <span class="me">ExtractField</span>(json, <span class="st">"body"</span>);
+
+                <span class="kw">string</span> numericTag = tag.<span class="me">TrimStart</span>(<span class="st">'v'</span>);
+                <span class="kw">if</span> (!<span class="ty">Version</span>.<span class="me">TryParse</span>(numericTag, <span class="kw">out</span> <span class="ty">Version</span> latest)) <span class="kw">return</span> <span class="kw">null</span>;
+                <span class="kw">if</span> (latest &lt;= CurrentVersion) <span class="kw">return</span> <span class="kw">null</span>;
+                <span class="kw">if</span> (skipVer == tag) <span class="kw">return</span> <span class="kw">null</span>;
+
+                <span class="kw">return</span> <span class="kw">new</span> <span class="ty">UpdateInfo</span>
+                {
+                    LatestVersion = tag,
+                    DownloadUrl   = html,
+                    ReleaseNotes  = body
+                };
+            }
+            <span class="kw">catch</span> { <span class="kw">return</span> <span class="kw">null</span>; }  <span class="cm">// Silently fail — no internet, rate limit, etc.</span>
+        }
+
+        <span class="kw">public</span> <span class="kw">static</span> <span class="kw">string</span> <span class="me">GetInstallerUrl</span>(<span class="kw">string</span> tag)
+        {
+            <span class="kw">string</span> ver = tag.<span class="me">TrimStart</span>(<span class="st">'v'</span>);
+            <span class="kw">return</span> <span class="st">$"https://github.com/{Owner}/{Repo}/releases/download/{tag}/VolumeMixer-Setup-v{ver}.exe"</span>;
+        }
+
+        <span class="cm">// Downloads installer to %TEMP%, runs it silently, exits the app.</span>
+        <span class="kw">public</span> <span class="kw">static</span> <span class="kw">void</span> <span class="me">DownloadAndInstall</span>(<span class="kw">string</span> tag, <span class="ty">Action</span>&lt;<span class="kw">int</span>&gt; onProgress, <span class="ty">Action</span>&lt;<span class="kw">string</span>&gt; onError)
+        {
+            <span class="kw">string</span> url  = <span class="me">GetInstallerUrl</span>(tag);
+            <span class="kw">string</span> dest = <span class="ty">Path</span>.<span class="me">Combine</span>(<span class="ty">Path</span>.<span class="me">GetTempPath</span>(), <span class="st">$"VolumeMixer-Setup-{tag}.exe"</span>);
+            <span class="kw">try</span>
+            {
+                <span class="kw">using</span> (<span class="kw">var</span> client = <span class="kw">new</span> <span class="ty">WebClient</span>())
+                {
+                    client.DownloadProgressChanged += (s, e) =&gt; onProgress?.<span class="me">Invoke</span>(e.ProgressPercentage);
+                    client.DownloadFileCompleted   += (s, e) =&gt;
+                    {
+                        <span class="kw">if</span> (e.Error != <span class="kw">null</span>)  { onError?.<span class="me">Invoke</span>(e.Error.Message); <span class="kw">return</span>; }
+                        <span class="kw">if</span> (e.Cancelled)       { onError?.<span class="me">Invoke</span>(<span class="st">"Cancelled."</span>);        <span class="kw">return</span>; }
+
+                        <span class="kw">string</span> appExe = System.Windows.Forms.<span class="ty">Application</span>.ExecutablePath;
+                        <span class="kw">var</span> psi = <span class="kw">new</span> <span class="ty">ProcessStartInfo</span>(dest,
+                            <span class="st">"/SILENT /CLOSEAPPLICATIONS /RESTARTAPPLICATIONS /RESTARTEXIT /RELAUNCHPATH=\""</span> + appExe + <span class="st">"\""</span>)
+                        {
+                            UseShellExecute = <span class="kw">true</span>
+                        };
+                        <span class="ty">Process</span>.<span class="me">Start</span>(psi);
+                        System.Windows.Forms.<span class="ty">Application</span>.<span class="me">Exit</span>();
+                    };
+                    client.<span class="me">DownloadFileAsync</span>(<span class="kw">new</span> <span class="ty">Uri</span>(url), dest);
+                }
+            }
+            <span class="kw">catch</span> (<span class="ty">Exception</span> ex) { onError?.<span class="me">Invoke</span>(ex.Message); }
+        }
+
+        <span class="kw">public</span> <span class="kw">static</span> <span class="kw">void</span> <span class="me">SaveSkipVersion</span>(<span class="kw">string</span> version)
+        {
+            <span class="kw">try</span>
+            {
+                <span class="kw">using</span> (<span class="kw">var</span> key = <span class="ty">Registry</span>.CurrentUser.<span class="me">CreateSubKey</span>(REG_KEY))
+                    key.<span class="me">SetValue</span>(REG_SKIP_VER, version);
+            }
+            <span class="kw">catch</span> { }
+        }
+
+        <span class="kw">private</span> <span class="kw">static</span> <span class="kw">string</span> <span class="me">ReadSkipVersion</span>()
+        {
+            <span class="kw">try</span>
+            {
+                <span class="kw">using</span> (<span class="kw">var</span> key = <span class="ty">Registry</span>.CurrentUser.<span class="me">OpenSubKey</span>(REG_KEY))
+                    <span class="kw">return</span> key?.<span class="me">GetValue</span>(REG_SKIP_VER) <span class="kw">as</span> <span class="kw">string</span> ?? <span class="st">""</span>;
+            }
+            <span class="kw">catch</span> { <span class="kw">return</span> <span class="st">""</span>; }
+        }
+
+        <span class="cm">// Minimal JSON field extractor (no external deps)</span>
+        <span class="kw">private</span> <span class="kw">static</span> <span class="kw">string</span> <span class="me">ExtractField</span>(<span class="kw">string</span> json, <span class="kw">string</span> field)
+        {
+            <span class="kw">string</span> search = <span class="st">"\""</span> + field + <span class="st">"\""</span>;
+            <span class="kw">int</span> idx = json.<span class="me">IndexOf</span>(search, <span class="ty">StringComparison</span>.Ordinal);
+            <span class="kw">if</span> (idx &lt; <span class="nu">0</span>) <span class="kw">return</span> <span class="st">""</span>;
+            idx += search.Length;
+            <span class="kw">while</span> (idx &lt; json.Length &amp;&amp; (json[idx] == <span class="st">' '</span> || json[idx] == <span class="st">':'</span>)) idx++;
+            <span class="kw">if</span> (idx &gt;= json.Length) <span class="kw">return</span> <span class="st">""</span>;
+            <span class="kw">if</span> (json[idx] == <span class="st">'"'</span>)
+            {
+                idx++;
+                <span class="kw">var</span> sb = <span class="kw">new</span> <span class="ty">StringBuilder</span>();
+                <span class="kw">while</span> (idx &lt; json.Length &amp;&amp; json[idx] != <span class="st">'"'</span>)
+                {
+                    <span class="kw">if</span> (json[idx] == <span class="st">'\\'</span>) idx++;
+                    <span class="kw">if</span> (idx &lt; json.Length) sb.<span class="me">Append</span>(json[idx]);
+                    idx++;
+                }
+                <span class="kw">return</span> sb.<span class="me">ToString</span>();
+            }
+            <span class="kw">int</span> end = json.<span class="me">IndexOfAny</span>(<span class="kw">new</span>[] { <span class="st">','</span>, <span class="st">'}'</span>, <span class="st">']'</span> }, idx);
+            <span class="kw">return</span> end &lt; <span class="nu">0</span> ? json.<span class="me">Substring</span>(idx) : json.<span class="me">Substring</span>(idx, end - idx).<span class="me">Trim</span>();
+        }
+
+        <span class="kw">private</span> <span class="kw">static</span> <span class="kw">string</span> <span class="me">FetchJson</span>(<span class="kw">string</span> url)
+        {
+            <span class="kw">var</span> req = (<span class="ty">HttpWebRequest</span>)<span class="ty">WebRequest</span>.<span class="me">Create</span>(url);
+            req.UserAgent = <span class="st">"VolumeMixer-Updater/1.0"</span>;  <span class="cm">// GitHub API requires a UA</span>
+            req.Timeout   = <span class="nu">5000</span>;
+            <span class="kw">using</span> (<span class="kw">var</span> resp   = (<span class="ty">HttpWebResponse</span>)req.<span class="me">GetResponse</span>())
+            <span class="kw">using</span> (<span class="kw">var</span> stream = resp.<span class="me">GetResponseStream</span>())
+            <span class="kw">using</span> (<span class="kw">var</span> reader = <span class="kw">new</span> <span class="ty">StreamReader</span>(stream, <span class="ty">Encoding</span>.UTF8))
+                <span class="kw">return</span> reader.<span class="me">ReadToEnd</span>();
+        }
+    }
+}</pre>
+        </div>
+        <div class="code-panel" id="panel-dialog-cs">
+          <button class="copy-btn" onclick="copyPanel('dialog-cs',this)">copy</button>
+          <pre id="code-dialog-cs"><span class="kw">using</span> System;
+<span class="kw">using</span> System.Drawing;
+<span class="kw">using</span> System.Drawing.Drawing2D;
+<span class="kw">using</span> System.Windows.Forms;
+
+<span class="kw">namespace</span> <span class="ty">VolumeMixer</span>
+{
+    <span class="kw">public</span> <span class="kw">class</span> <span class="ty">UpdateDialog</span> : <span class="ty">Form</span>
+    {
+        <span class="kw">private</span> <span class="kw">readonly</span> <span class="ty">UpdateInfo</span> _info;
+
+        <span class="at">[System.Runtime.InteropServices.DllImport("user32.dll")]</span>
+        <span class="kw">static</span> <span class="kw">extern</span> <span class="kw">bool</span> <span class="me">ReleaseCapture</span>();
+        <span class="at">[System.Runtime.InteropServices.DllImport("user32.dll")]</span>
+        <span class="kw">static</span> <span class="kw">extern</span> <span class="ty">IntPtr</span> <span class="me">SendMessage</span>(<span class="ty">IntPtr</span> h, <span class="kw">int</span> msg, <span class="kw">int</span> w, <span class="kw">int</span> l);
+
+        <span class="kw">public</span> <span class="me">UpdateDialog</span>(<span class="ty">UpdateInfo</span> info) { _info = info; <span class="me">BuildUI</span>(); }
+
+        <span class="kw">private</span> <span class="kw">void</span> <span class="me">BuildUI</span>()
+        {
+            Text            = <span class="st">"Update Available"</span>;
+            Size            = <span class="kw">new</span> <span class="ty">Size</span>(<span class="nu">380</span>, <span class="nu">280</span>);
+            FormBorderStyle = <span class="ty">FormBorderStyle</span>.None;
+            StartPosition   = <span class="ty">FormStartPosition</span>.CenterScreen;
+            BackColor       = <span class="ty">Theme</span>.Surface;
+            DoubleBuffered  = <span class="kw">true</span>;
+            MouseDown      += Drag;
+
+            <span class="cm">// Thin accent bar at the top</span>
+            <span class="kw">var</span> topBar = <span class="kw">new</span> <span class="ty">Panel</span> { Dock = <span class="ty">DockStyle</span>.Top, Height = <span class="nu">4</span>, BackColor = <span class="ty">Theme</span>.Accent };
+
+            <span class="kw">var</span> titleLbl = <span class="kw">new</span> <span class="ty">Label</span>
+            {
+                Text = <span class="st">"Update Available"</span>,
+                Font = <span class="kw">new</span> <span class="ty">Font</span>(<span class="st">"Segoe UI"</span>, <span class="nu">13f</span>, <span class="ty">FontStyle</span>.Bold),
+                ForeColor = <span class="ty">Theme</span>.TextPrimary, BackColor = <span class="ty">Color</span>.Transparent,
+                AutoSize = <span class="kw">true</span>, Location = <span class="kw">new</span> <span class="ty">Point</span>(<span class="nu">20</span>, <span class="nu">22</span>)
+            };
+            titleLbl.MouseDown += Drag;
+
+            <span class="kw">var</span> closeLbl = <span class="kw">new</span> <span class="ty">Label</span>
+            {
+                Text = <span class="st">"x"</span>, Font = <span class="kw">new</span> <span class="ty">Font</span>(<span class="st">"Segoe UI"</span>, <span class="nu">13f</span>),
+                ForeColor = <span class="ty">Theme</span>.TextSecondary, BackColor = <span class="ty">Color</span>.Transparent,
+                AutoSize = <span class="kw">true</span>, Cursor = <span class="ty">Cursors</span>.Hand, Location = <span class="kw">new</span> <span class="ty">Point</span>(Width - <span class="nu">30</span>, <span class="nu">18</span>)
+            };
+            closeLbl.Click      += (s, e) =&gt; <span class="me">Close</span>();
+            closeLbl.MouseEnter += (s, e) =&gt; closeLbl.ForeColor = <span class="ty">Theme</span>.Accent;
+            closeLbl.MouseLeave += (s, e) =&gt; closeLbl.ForeColor = <span class="ty">Theme</span>.TextSecondary;
+            Resize += (s, e) =&gt; closeLbl.Location = <span class="kw">new</span> <span class="ty">Point</span>(Width - <span class="nu">30</span>, <span class="nu">18</span>);
+
+            <span class="kw">var</span> verLbl = <span class="kw">new</span> <span class="ty">Label</span>
+            {
+                Text = <span class="st">"Version "</span> + _info.LatestVersion + <span class="st">" is ready to install."</span>,
+                Font = <span class="kw">new</span> <span class="ty">Font</span>(<span class="st">"Segoe UI"</span>, <span class="nu">9f</span>), ForeColor = <span class="ty">Theme</span>.TextSecondary,
+                BackColor = <span class="ty">Color</span>.Transparent, AutoSize = <span class="kw">true</span>, Location = <span class="kw">new</span> <span class="ty">Point</span>(<span class="nu">20</span>, <span class="nu">58</span>)
+            };
+
+            <span class="kw">string</span> notes = <span class="kw">string</span>.<span class="me">IsNullOrWhiteSpace</span>(_info.ReleaseNotes)
+                ? <span class="st">"No release notes provided."</span>
+                : _info.ReleaseNotes.Length &gt; <span class="nu">160</span>
+                    ? _info.ReleaseNotes.<span class="me">Substring</span>(<span class="nu">0</span>, <span class="nu">157</span>) + <span class="st">"..."</span>
+                    : _info.ReleaseNotes;
+
+            <span class="kw">var</span> notesBox = <span class="kw">new</span> <span class="ty">Label</span>
+            {
+                Text = notes, Font = <span class="kw">new</span> <span class="ty">Font</span>(<span class="st">"Segoe UI"</span>, <span class="nu">8.5f</span>),
+                ForeColor = <span class="ty">Color</span>.<span class="me">FromArgb</span>(<span class="nu">100</span>, <span class="nu">100</span>, <span class="nu">128</span>),
+                BackColor = <span class="ty">Theme</span>.Background,
+                Location = <span class="kw">new</span> <span class="ty">Point</span>(<span class="nu">20</span>, <span class="nu">82</span>), Size = <span class="kw">new</span> <span class="ty">Size</span>(<span class="nu">340</span>, <span class="nu">66</span>), Padding = <span class="kw">new</span> <span class="ty">Padding</span>(<span class="nu">8</span>)
+            };
+
+            <span class="cm">// Progress bar — hidden until download starts</span>
+            <span class="kw">var</span> progressBar = <span class="kw">new</span> <span class="ty">ProgressBarFlat</span>
+            {
+                Location = <span class="kw">new</span> <span class="ty">Point</span>(<span class="nu">20</span>, <span class="nu">158</span>), Size = <span class="kw">new</span> <span class="ty">Size</span>(<span class="nu">340</span>, <span class="nu">4</span>),
+                Visible = <span class="kw">false</span>, Value = <span class="nu">0</span>
+            };
+            <span class="kw">var</span> progressLbl = <span class="kw">new</span> <span class="ty">Label</span>
+            {
+                Text = <span class="st">""</span>, Font = <span class="kw">new</span> <span class="ty">Font</span>(<span class="st">"Segoe UI"</span>, <span class="nu">7.5f</span>),
+                ForeColor = <span class="ty">Theme</span>.TextSecondary, BackColor = <span class="ty">Color</span>.Transparent,
+                AutoSize = <span class="kw">true</span>, Location = <span class="kw">new</span> <span class="ty">Point</span>(<span class="nu">20</span>, <span class="nu">166</span>), Visible = <span class="kw">false</span>
+            };
+
+            <span class="cm">// Buttons: Update Now / Ignore / Never ask again</span>
+            <span class="kw">var</span> updateBtn = <span class="kw">new</span> <span class="ty">AccentButton</span>  { Text = <span class="st">"Update Now"</span>,      Size = <span class="kw">new</span> <span class="ty">Size</span>(<span class="nu">120</span>, <span class="nu">34</span>), Location = <span class="kw">new</span> <span class="ty">Point</span>(<span class="nu">20</span>,  <span class="nu">226</span>) };
+            <span class="kw">var</span> ignoreBtn = <span class="kw">new</span> <span class="ty">GhostButton</span>  { Text = <span class="st">"Ignore"</span>,           Size = <span class="kw">new</span> <span class="ty">Size</span>(<span class="nu">80</span>,  <span class="nu">34</span>), Location = <span class="kw">new</span> <span class="ty">Point</span>(<span class="nu">150</span>, <span class="nu">226</span>) };
+            <span class="kw">var</span> neverBtn  = <span class="kw">new</span> <span class="ty">GhostButton</span>  { Text = <span class="st">"Never ask again"</span>,  Size = <span class="kw">new</span> <span class="ty">Size</span>(<span class="nu">126</span>, <span class="nu">34</span>), Location = <span class="kw">new</span> <span class="ty">Point</span>(<span class="nu">238</span>, <span class="nu">226</span>) };
+
+            ignoreBtn.Click += (s, e) =&gt; <span class="me">Close</span>();
+            neverBtn.Click  += (s, e) =&gt; { <span class="ty">Updater</span>.<span class="me">SaveSkipVersion</span>(_info.LatestVersion); <span class="me">Close</span>(); };
+
+            updateBtn.Click += (s, e) =&gt;
+            {
+                updateBtn.Enabled = <span class="kw">false</span>; updateBtn.Text = <span class="st">"Downloading..."</span>;
+                ignoreBtn.Enabled = <span class="kw">false</span>; neverBtn.Enabled = <span class="kw">false</span>;
+                progressBar.Visible = <span class="kw">true</span>; progressLbl.Visible = <span class="kw">true</span>;
+                progressLbl.Text = <span class="st">"Starting download..."</span>;
+
+                System.Threading.<span class="ty">ThreadPool</span>.<span class="me">QueueUserWorkItem</span>(_ =&gt;
+                {
+                    <span class="ty">Updater</span>.<span class="me">DownloadAndInstall</span>(
+                        _info.LatestVersion,
+                        pct =&gt; <span class="me">BeginInvoke</span>(<span class="kw">new</span> <span class="ty">MethodInvoker</span>(() =&gt;
+                        {
+                            progressBar.Value = pct;
+                            progressLbl.Text  = <span class="st">"Downloading... "</span> + pct + <span class="st">"%"</span>;
+                        })),
+                        err =&gt; <span class="me">BeginInvoke</span>(<span class="kw">new</span> <span class="ty">MethodInvoker</span>(() =&gt;
+                        {
+                            updateBtn.Enabled = <span class="kw">true</span>;  updateBtn.Text = <span class="st">"Update Now"</span>;
+                            ignoreBtn.Enabled = <span class="kw">true</span>;  neverBtn.Enabled = <span class="kw">true</span>;
+                            progressBar.Visible   = <span class="kw">false</span>;
+                            progressLbl.ForeColor = <span class="ty">Theme</span>.MutedRed;
+                            progressLbl.Text      = <span class="st">"Failed - check your connection"</span>;
+                        }))
+                    );
+                });
+            };
+
+            Controls.Add(topBar);    Controls.Add(titleLbl);   Controls.Add(closeLbl);
+            Controls.Add(verLbl);    Controls.Add(notesBox);    Controls.Add(progressBar);
+            Controls.Add(progressLbl); Controls.Add(updateBtn); Controls.Add(ignoreBtn);
+            Controls.Add(neverBtn);
+        }
+
+        <span class="kw">protected</span> <span class="kw">override</span> <span class="kw">void</span> <span class="me">OnPaint</span>(<span class="ty">PaintEventArgs</span> e)
+        {
+            <span class="kw">base</span>.<span class="me">OnPaint</span>(e);
+            e.Graphics.<span class="me">DrawRectangle</span>(<span class="kw">new</span> System.Drawing.<span class="ty">Pen</span>(<span class="ty">Theme</span>.Border, <span class="nu">1</span>),
+                <span class="kw">new</span> <span class="ty">Rectangle</span>(<span class="nu">0</span>, <span class="nu">0</span>, Width - <span class="nu">1</span>, Height - <span class="nu">1</span>));
+        }
+
+        <span class="kw">private</span> <span class="kw">void</span> <span class="me">Drag</span>(<span class="kw">object</span> sender, <span class="ty">MouseEventArgs</span> e)
+        {
+            <span class="kw">if</span> (e.Button == <span class="ty">MouseButtons</span>.Left) { <span class="me">ReleaseCapture</span>(); <span class="me">SendMessage</span>(Handle, <span class="nu">0xA1</span>, <span class="nu">0x2</span>, <span class="nu">0</span>); }
+        }
+    }
+
+    <span class="cm">// Thin flat progress bar styled to match the theme</span>
+    <span class="kw">public</span> <span class="kw">class</span> <span class="ty">ProgressBarFlat</span> : <span class="ty">Control</span>
+    {
+        <span class="kw">private</span> <span class="kw">int</span> _value;
+        <span class="kw">public</span> <span class="kw">int</span> Value
+        {
+            <span class="kw">get</span> =&gt; _value;
+            <span class="kw">set</span> { _value = <span class="ty">Math</span>.<span class="me">Max</span>(<span class="nu">0</span>, <span class="ty">Math</span>.<span class="me">Min</span>(<span class="nu">100</span>, value)); <span class="me">Invalidate</span>(); }
+        }
+
+        <span class="kw">public</span> <span class="me">ProgressBarFlat</span>()
+        {
+            <span class="me">SetStyle</span>(
+                <span class="ty">ControlStyles</span>.OptimizedDoubleBuffer |
+                <span class="ty">ControlStyles</span>.UserPaint             |
+                <span class="ty">ControlStyles</span>.AllPaintingInWmPaint  |
+                <span class="ty">ControlStyles</span>.SupportsTransparentBackColor, <span class="kw">true</span>);
+            BackColor = <span class="ty">Color</span>.Transparent;
+        }
+
+        <span class="kw">protected</span> <span class="kw">override</span> <span class="kw">void</span> <span class="me">OnPaint</span>(<span class="ty">PaintEventArgs</span> e)
+        {
+            <span class="ty">Graphics</span> g = e.Graphics;
+            g.<span class="me">FillRectangle</span>(<span class="kw">new</span> <span class="ty">SolidBrush</span>(<span class="ty">Theme</span>.Border), <span class="nu">0</span>, <span class="nu">0</span>, Width, Height);
+            <span class="kw">if</span> (_value &gt; <span class="nu">0</span>)
+            {
+                <span class="kw">int</span> fillW = (<span class="kw">int</span>)(Width * (_value / <span class="nu">100f</span>));
+                <span class="kw">using</span> (<span class="kw">var</span> brush = <span class="kw">new</span> <span class="ty">LinearGradientBrush</span>(
+                    <span class="kw">new</span> <span class="ty">Rectangle</span>(<span class="nu">0</span>, <span class="nu">0</span>, <span class="ty">Math</span>.<span class="me">Max</span>(<span class="nu">1</span>, fillW), Height),
+                    <span class="ty">Theme</span>.AccentGradTop, <span class="ty">Theme</span>.AccentGradBot,
+                    <span class="ty">LinearGradientMode</span>.Horizontal))
+                    g.<span class="me">FillRectangle</span>(brush, <span class="nu">0</span>, <span class="nu">0</span>, fillW, Height);
+            }
+        }
+    }
+}</pre>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2 class="section-group">Quality & Maintainability</h2>
+
+  <!-- CODE QUALITY -->
+  <div class="section" id="sec-quality">
+    <div class="section-header" onclick="toggleSection('quality')">
+      <span class="section-icon">◉</span>
+      <div class="section-meta">
+        <div class="section-title">Code Quality</div>
+        <div class="section-desc">Clean, consistent, and maintainable.</div>
+      </div>
+      <span class="section-done" id="sd-quality">0/5</span>
+      <span class="section-chevron open" id="chev-quality">▼</span>
+    </div>
+    <div class="section-body" id="body-quality">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A linter or static analysis tool is configured for the project</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Code style is consistent and enforced (formatter, style guide, analyzer)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">No dead code, commented-out blocks, or untracked TODOs left behind</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Dependencies are reviewed and audited for known vulnerabilities</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">At least a baseline of automated tests exists and runs in CI</div></div>
+    </div>
+  </div>
+
+  <!-- HANDOFF & ITERATION -->
+  <div class="section" id="sec-handoff">
+    <div class="section-header" onclick="toggleSection('handoff')">
+      <span class="section-icon">⇥</span>
+      <div class="section-meta">
+        <div class="section-title">Handoff & Iteration</div>
+        <div class="section-desc">Done means delivered. New features start clean.</div>
+      </div>
+      <span class="section-done" id="sd-handoff">0/6</span>
+      <span class="section-chevron open" id="chev-handoff">▼</span>
+    </div>
+    <div class="section-body" id="body-handoff">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Project is handed off with a runbook or README — not just the code</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A backlog or issue tracker exists before starting new features</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">New features branch off from a clean, stable base — never from a hotfix or WIP branch</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A "done" definition exists before starting work (acceptance criteria, not just a task title)</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Version is bumped and a release tag is cut before calling anything done</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Known issues or tech debt introduced are tracked — not forgotten</div></div>
+    </div>
+  </div>
+
+  <!-- DOCS -->
+  <div class="section" id="sec-docs">
+    <div class="section-header" onclick="toggleSection('docs')">
+      <span class="section-icon">☰</span>
+      <div class="section-meta">
+        <div class="section-title">Documentation</div>
+        <div class="section-desc">Anyone — including future you — can pick this up and run it.</div>
+      </div>
+      <span class="section-done" id="sd-docs">0/4</span>
+      <span class="section-chevron open" id="chev-docs">▼</span>
+    </div>
+    <div class="section-body" id="body-docs">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">README covers: what it does, how to set it up, and how to build/run it</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">How to trigger a release is clearly documented</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Non-obvious architectural or design decisions are explained</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Public interfaces, APIs, or extension points are documented at the entry point</div></div>
+    </div>
+  </div>
+
+  <!-- OPS -->
+  <div class="section" id="sec-ops">
+    <div class="section-header" onclick="toggleSection('ops')">
+      <span class="section-icon">⊞</span>
+      <div class="section-meta">
+        <div class="section-title">Ops & Maintainability</div>
+        <div class="section-desc">You can deploy, monitor, and roll back without scrambling.</div>
+      </div>
+      <span class="section-done" id="sd-ops">0/4</span>
+      <span class="section-chevron open" id="chev-ops">▼</span>
+    </div>
+    <div class="section-body" id="body-ops">
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">A previous release can be re-deployed quickly — rollback plan exists</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">There is a health check, status signal, or smoke test to verify a deployment</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Monitoring or alerting is in place for critical failures in production</div></div>
+      <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Data that matters is backed up and the backup has been verified at least once</div></div>
+    </div>
+  </div>
+
+  <!-- PLATFORM SPECIFIC -->
+  <h2 class="section-group" id="sec-platform" style="margin-top:48px;">Platform-Specific</h2>
+  <p style="font-size:11px;color:var(--text2);margin-bottom:20px;font-family:'JetBrains Mono',monospace;">Extra concerns on top of the generic checklist. Pick the platform.</p>
+
+  <div class="tab-row">
+    <button class="plat-tab active" onclick="showPlat('web',this)">Web App</button>
+    <button class="plat-tab" onclick="showPlat('api',this)">API / Backend</button>
+    <button class="plat-tab" onclick="showPlat('cloud',this)">Cloud Function</button>
+    <button class="plat-tab" onclick="showPlat('desktop',this)">Desktop / Mobile</button>
+    <button class="plat-tab" onclick="showPlat('lib',this)">Library / Plugin</button>
+  </div>
+
+  <div class="plat-panel active" id="plat-web">
+    <div class="section">
+      <div class="section-body" style="border-top:none;">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">HTTPS enforced everywhere, mixed content blocked</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Content Security Policy (CSP) headers configured</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Cookie attributes set correctly (Secure, HttpOnly, SameSite)</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Cookie consent banner fires before any non-essential cookies are set</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Core Web Vitals measured (LCP, CLS, INP)</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">App degrades gracefully without JavaScript for critical paths</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">SEO basics: meta tags, canonical URLs, sitemap, robots.txt</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Accessibility baseline: labels, ARIA roles, keyboard navigation, color contrast</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="plat-panel" id="plat-api">
+    <div class="section">
+      <div class="section-body" style="border-top:none;">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">All endpoints require authentication unless explicitly marked public</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Input validation on every endpoint — never trust the caller</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Consistent error response format across all endpoints</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">API versioning strategy defined before first public release</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Rate limiting applied to prevent abuse</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Pagination implemented on all list endpoints</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Sensitive fields never returned in responses (passwords, internal IDs, etc.)</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="plat-panel" id="plat-cloud">
+    <div class="section">
+      <div class="section-body" style="border-top:none;">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Cold start time is acceptable for the use case</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Function timeout is configured explicitly — not left at default</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Idempotency handled — safe to retry on failure without side effects</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Concurrency and scaling limits are understood and configured</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Secrets injected via env vars or vault — not bundled in the function</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Execution cost estimated at expected load before going live</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="plat-panel" id="plat-desktop">
+    <div class="section">
+      <div class="section-body" style="border-top:none;">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">App does not crash on first launch with no existing data or config</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Auto-updater is implemented — see the Auto-Updater section above</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Permissions requested are minimal and clearly explained to the user</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Offline behaviour is defined — app fails gracefully without a network</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Local storage of sensitive data is encrypted</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">App is tested on minimum supported OS version</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="plat-panel" id="plat-lib">
+    <div class="section">
+      <div class="section-body" style="border-top:none;">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Public API surface is minimal and intentional — nothing exposed that shouldn't be</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Breaking changes follow SemVer and are documented in the changelog</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">The package does not bundle dev dependencies into the production output</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Works correctly when consumed in a clean project with no extra setup</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">README includes a minimal working example</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">LICENSE file is present and appropriate</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ship-footer" id="ship-footer">— complete all items to ship —</div>
+</main>
+</div>
+
+<script>
+// ── State ────────────────────────────────────────────────────────────────────
+let filter = 'all';
+
+const SECTION_IDS = ['errors','logging','vcs','releases','cicd','config','security','api','ux','privacy','updater','quality','handoff','docs','ops'];
+
+function getItems(secId) {
+  return document.querySelectorAll(`#body-${secId} .item`);
+}
+
+function countSection(secId) {
+  const items = getItems(secId);
+  let done = 0;
+  items.forEach(i => { if (i.classList.contains('done')) done++; });
+  return { done, total: items.length };
+}
+
+function updateSection(secId) {
+  const { done, total } = countSection(secId);
+  const el = document.getElementById(`sd-${secId}`);
+  if (!el) return;
+  el.textContent = `${done}/${total}`;
+  el.className = 'section-done' + (done === total ? ' all' : '');
+  const nb = document.getElementById(`nb-${secId}`);
+  if (nb) { nb.textContent = done; }
+}
+
+function updateGlobal() {
+  let done = 0, total = 0;
+  SECTION_IDS.forEach(id => {
+    const c = countSection(id);
+    done  += c.done;
+    total += c.total;
+  });
+  const pct = total ? Math.round((done / total) * 100) : 0;
+  document.getElementById('global-bar').style.width  = pct + '%';
+  document.getElementById('global-text').textContent = `${done} / ${total} · ${pct}%`;
+
+  const footer = document.getElementById('ship-footer');
+  if (done === total && total > 0) {
+    footer.textContent = '✓  ALL CLEAR — SHIP IT';
+    footer.classList.add('done');
+  } else {
+    footer.textContent = `— ${total - done} items remaining —`;
+    footer.classList.remove('done');
+  }
+}
+
+// ── Toggle item ──────────────────────────────────────────────────────────────
+function toggleItem(el) {
+  el.classList.toggle('done');
+  el.querySelector('.checkbox').classList.toggle('checked', el.classList.contains('done'));
+  const secId = el.closest('.section-body, .plat-panel .section .section-body')
+                  ?.closest('[id^="body-"]')?.id.replace('body-','');
+  if (secId) { updateSection(secId); }
+  updateGlobal();
+  applyFilter();
+}
+
+// ── Toggle section collapse ───────────────────────────────────────────────────
+function toggleSection(id) {
+  const body  = document.getElementById(`body-${id}`);
+  const chev  = document.getElementById(`chev-${id}`);
+  const open  = body.style.display !== 'none';
+  body.style.display = open ? 'none' : 'block';
+  chev.classList.toggle('open', !open);
+}
+
+// ── Filter ───────────────────────────────────────────────────────────────────
+function setFilter(f, btn) {
+  filter = f;
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  applyFilter();
+}
+
+function applyFilter() {
+  document.querySelectorAll('.item').forEach(item => {
+    const done = item.classList.contains('done');
+    if (filter === 'all')     item.style.display = '';
+    if (filter === 'done')    item.style.display = done ? '' : 'none';
+    if (filter === 'pending') item.style.display = done ? 'none' : '';
+  });
+}
+
+// ── Reset ────────────────────────────────────────────────────────────────────
+function resetAll() {
+  document.querySelectorAll('.item').forEach(item => {
+    item.classList.remove('done');
+    item.querySelector('.checkbox').classList.remove('checked');
+    item.style.display = '';
+  });
+  filter = 'all';
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('.filter-btn').classList.add('active');
+  SECTION_IDS.forEach(updateSection);
+  updateGlobal();
+}
+
+// ── Platform tabs ─────────────────────────────────────────────────────────────
+function showPlat(id, btn) {
+  document.querySelectorAll('.plat-panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.plat-tab').forEach(b => b.classList.remove('active'));
+  document.getElementById(`plat-${id}`).classList.add('active');
+  btn.classList.add('active');
+}
+
+// ── Code tabs ─────────────────────────────────────────────────────────────────
+function switchTab(e, panelId) {
+  const wrap = e.target.closest('.code-ref');
+  wrap.querySelectorAll('.code-tab').forEach(t => t.classList.remove('active'));
+  wrap.querySelectorAll('.code-panel').forEach(p => p.classList.remove('active'));
+  e.target.classList.add('active');
+  document.getElementById(`panel-${panelId}`).classList.add('active');
+}
+
+// ── Copy code ─────────────────────────────────────────────────────────────────
+function copyPanel(id, btn) {
+  const pre = document.getElementById(`code-${id}`);
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'copied!';
+    btn.classList.add('ok');
+    setTimeout(() => { btn.textContent = 'copy'; btn.classList.remove('ok'); }, 1800);
+  });
+}
+
+// ── Nav active ────────────────────────────────────────────────────────────────
+function setActive(el) {
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+}
+
+// ── Init ──────────────────────────────────────────────────────────────────────
+SECTION_IDS.forEach(updateSection);
+updateGlobal();
+</script>
+</body>
+</html>

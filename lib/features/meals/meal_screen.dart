@@ -53,7 +53,7 @@ class _MealScreenState extends ConsumerState<MealScreen> {
   }
 
   Future<void> _addFood() async {
-    final items = await context.push<List<MealFoodItem>>('/foods/select');
+    final items = await context.push<List<MealFoodItem>>('/food-selector');
     if (items == null || items.isEmpty || !mounted) return;
     setState(() {
       _items.addAll(items.map(

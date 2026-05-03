@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../database/app_database.dart';
 import '../database/food_dao.dart';
 import '../database/meal_dao.dart';
+import '../database/quick_entry_dao.dart';
 
 final appDatabaseProvider =
     Provider<AppDatabase>((ref) => AppDatabase.instance);
@@ -13,3 +14,6 @@ final mealDaoProvider = Provider<MealDao>((ref) => MealDao(
       ref.watch(appDatabaseProvider),
       ref.watch(foodDaoProvider),
     ));
+
+final quickEntryDaoProvider = Provider<QuickEntryDao>(
+    (ref) => QuickEntryDao(ref.watch(appDatabaseProvider)));
