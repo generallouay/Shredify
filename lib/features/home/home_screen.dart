@@ -8,6 +8,7 @@ import '../../core/providers/daily_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/models/macro_totals.dart';
 import '../../core/models/daily_goals.dart';
+import '../shared/widgets/macro_row.dart';
 
 class HomeScreen extends ConsumerWidget {
   const HomeScreen({super.key});
@@ -215,15 +216,7 @@ class _LastMealCard extends StatelessWidget {
                     ),
                     if (meal.isCalculated) ...[
                       const SizedBox(height: 6),
-                      Text(
-                        '${totals.kcal.toStringAsFixed(0)} kcal  •  P ${totals.protein.toStringAsFixed(1)}g',
-                        style: TextStyle(
-                            fontSize: 13,
-                            color: Theme.of(context)
-                                .colorScheme
-                                .primary,
-                            fontWeight: FontWeight.w500),
-                      ),
+                      _MacroSummary(totals: totals),
                     ],
                   ],
                 ),
@@ -233,6 +226,22 @@ class _LastMealCard extends StatelessWidget {
           ),
         ),
       ),
+    );
+  }
+}
+
+class _MacroSummary extends StatelessWidget {
+  final MacroTotals totals;
+  const _MacroSummary({required this.totals});
+
+  @override
+  Widget build(BuildContext context) {
+    return MacroRow(
+      kcal: totals.kcal,
+      protein: totals.protein,
+      carbs: totals.carbs,
+      fat: totals.fat,
+      compact: true,
     );
   }
 }

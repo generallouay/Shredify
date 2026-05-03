@@ -1,6 +1,7 @@
 import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../core/models/meal_food_item.dart';
+import '../../shared/widgets/macro_row.dart';
 
 class MealFoodItemCard extends StatelessWidget {
   final MealFoodItem item;
@@ -170,12 +171,12 @@ class _MacroLine extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Text(
-      '${macros.kcal.toStringAsFixed(0)} kcal  •  P ${macros.protein.toStringAsFixed(1)}g  •  C ${macros.carbs.toStringAsFixed(1)}g  •  F ${macros.fat.toStringAsFixed(1)}g',
-      style: TextStyle(
-          fontSize: 12,
-          color: Theme.of(context).colorScheme.primary,
-          fontWeight: FontWeight.w500),
+    return MacroRow(
+      kcal: macros.kcal,
+      protein: macros.protein,
+      carbs: macros.carbs,
+      fat: macros.fat,
+      compact: true,
     );
   }
 }
