@@ -107,6 +107,35 @@ class _MealScreenState extends ConsumerState<MealScreen> {
     }
   }
 
+  Future<void> _delete() async {
+    final confirm = await showDialog<bool>(
+      context: context,
+      builder: (_) => AlertDialog(
+        title: const Text('Delete meal?'),
+        content: const Text('This cannot be undone.'),
+        actions: [
+          TextButton(
+              onPressed: () => Navigator.pop(context, false),
+              child: const Text('Cancel')),
+          TextButton(
+              onPressed: () => Navigator.pop(context, true),
+              child: const Text('Delete',
+                  style: TextStyle(color: Colors.redAccent))),
+        ],
+      ),
+    );
+    if (confirm != true || !mounted) return;
+    try {
+      await ref.read(mealsProvider.notifier).delete(_original!.id);
+      if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to delete meal: $e')));
+      }
+    }
+  }
+
   MacroTotals get _totals => _items.fold(
         MacroTotals.zero,
         (acc, item) => item.macros != null ? acc + item.macros! : acc,
@@ -121,10 +150,14 @@ class _MealScreenState extends ConsumerState<MealScreen> {
       appBar: AppBar(
         title: Text(_isNew ? 'New Meal' : 'Edit Meal'),
         actions: [
+          if (!_isNew)
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.redAccent),
+              onPressed: _delete,
+            ),
           TextButton(
             onPressed: _save,
-            child:
-                Text(_isNew ? 'Save' : 'Update'),
+            child: Text(_isNew ? 'Save' : 'Update'),
           ),
         ],
       ),
