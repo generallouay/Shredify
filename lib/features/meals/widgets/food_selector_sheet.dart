@@ -13,10 +13,12 @@ class FoodSelectorSheet extends ConsumerStatefulWidget {
 
 class _FoodSelectorSheetState extends ConsumerState<FoodSelectorSheet> {
   String _query = '';
+  FoodType? _typeFilter;
 
   @override
   Widget build(BuildContext context) {
     final foodsAsync = ref.watch(foodsProvider);
+    final color = Theme.of(context).colorScheme.primary;
 
     return DraggableScrollableSheet(
       initialChildSize: 0.75,
@@ -39,7 +41,8 @@ class _FoodSelectorSheetState extends ConsumerState<FoodSelectorSheet> {
             padding: const EdgeInsets.symmetric(horizontal: 16),
             child: TextField(
               autofocus: true,
-              onChanged: (v) => setState(() => _query = v.toLowerCase().trim()),
+              onChanged: (v) =>
+                  setState(() => _query = v.toLowerCase().trim()),
               decoration: const InputDecoration(
                 hintText: 'Search foods…',
                 prefixIcon: Icon(Icons.search, size: 20),
@@ -47,15 +50,66 @@ class _FoodSelectorSheetState extends ConsumerState<FoodSelectorSheet> {
             ),
           ),
           const SizedBox(height: 8),
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            child: Row(
+              children: [
+                _Chip(
+                  label: 'All',
+                  selected: _typeFilter == null,
+                  color: color,
+                  onTap: () => setState(() => _typeFilter = null),
+                ),
+                const SizedBox(width: 8),
+                _Chip(
+                  label: 'Standard',
+                  selected: _typeFilter == FoodType.standard,
+                  color: color,
+                  onTap: () => setState(() => _typeFilter =
+                      _typeFilter == FoodType.standard
+                          ? null
+                          : FoodType.standard),
+                ),
+                const SizedBox(width: 8),
+                _Chip(
+                  label: 'Container',
+                  selected: _typeFilter == FoodType.container,
+                  color: color,
+                  onTap: () => setState(() => _typeFilter =
+                      _typeFilter == FoodType.container
+                          ? null
+                          : FoodType.container),
+                ),
+                const SizedBox(width: 8),
+                _Chip(
+                  label: 'Canister',
+                  selected: _typeFilter == FoodType.canister,
+                  color: color,
+                  onTap: () => setState(() => _typeFilter =
+                      _typeFilter == FoodType.canister
+                          ? null
+                          : FoodType.canister),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 4),
           Expanded(
             child: foodsAsync.when(
               data: (foods) {
-                final filtered = _query.isEmpty
-                    ? foods
-                    : foods
-                        .where(
-                            (f) => f.name.toLowerCase().contains(_query))
-                        .toList();
+                var filtered = foods;
+                if (_typeFilter != null) {
+                  filtered = filtered
+                      .where((f) => f.type == _typeFilter)
+                      .toList();
+                }
+                if (_query.isNotEmpty) {
+                  filtered = filtered
+                      .where(
+                          (f) => f.name.toLowerCase().contains(_query))
+                      .toList();
+                }
                 if (filtered.isEmpty) {
                   return const Center(
                       child: Text('No foods found',
@@ -65,7 +119,8 @@ class _FoodSelectorSheetState extends ConsumerState<FoodSelectorSheet> {
                   controller: scrollController,
                   padding: const EdgeInsets.fromLTRB(16, 0, 16, 32),
                   itemCount: filtered.length,
-                  separatorBuilder: (_, __) => const Divider(height: 1),
+                  separatorBuilder: (_, __) =>
+                      const Divider(height: 1),
                   itemBuilder: (context, i) =>
                       _FoodTile(food: filtered[i]),
                 );
@@ -76,6 +131,49 @@ class _FoodSelectorSheetState extends ConsumerState<FoodSelectorSheet> {
             ),
           ),
         ],
+      ),
+    );
+  }
+}
+
+class _Chip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+  const _Chip(
+      {required this.label,
+      required this.selected,
+      required this.color,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 150),
+        padding:
+            const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+        decoration: BoxDecoration(
+          color: selected
+              ? color.withValues(alpha: 0.2)
+              : const Color(0xFF2C2C2E),
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: selected ? color : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: selected ? color : Colors.white70,
+            fontSize: 13,
+            fontWeight:
+                selected ? FontWeight.w600 : FontWeight.normal,
+          ),
+        ),
       ),
     );
   }

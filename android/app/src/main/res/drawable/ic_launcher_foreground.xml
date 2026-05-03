@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <!-- Dumbbell / fitness icon centered in safe zone -->
+    <group
+        android:translateX="0"
+        android:translateY="0"
+        android:scaleX="0.7"
+        android:scaleY="0.7"
+        android:pivotX="12"
+        android:pivotY="12">
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M20.57,14.86L22,13.43L20.57,12L17,15.57L8.43,7L12,3.43L10.57,2L9.14,3.43L7.86,2.14L5.04,4.96L6.33,6.25L4.86,7.71L6.29,9.14L7.57,7.86L16.14,16.43L14.86,17.71L16.29,19.14L17.57,17.86L18.86,19.14L21.68,16.32L20.39,15.03L20.57,14.86Z" />
+    </group>
+</vector>

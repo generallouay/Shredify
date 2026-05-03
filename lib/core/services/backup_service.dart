@@ -62,19 +62,27 @@ class BackupService {
     final archive = ZipDecoder().decodeBytes(bytes);
 
     final tempDir = await getTemporaryDirectory();
+    final imgDir = await imagesDir();
     String? tempDbPath;
     bool isOldFormat = false;
 
-    // Extract DB
+    // Single pass: extract DB file and images together
     for (final entry in archive) {
       if (!entry.isFile) continue;
+      final content = entry.content as List<int>;
+
       if (entry.name == 'shredify.db') {
         tempDbPath = p.join(tempDir.path, 'restore_shredify.db');
-        File(tempDbPath).writeAsBytesSync(entry.content as List<int>);
+        File(tempDbPath).writeAsBytesSync(content);
       } else if (entry.name == 'meals.db3') {
         isOldFormat = true;
         tempDbPath = p.join(tempDir.path, 'restore_meals.db3');
-        File(tempDbPath).writeAsBytesSync(entry.content as List<int>);
+        File(tempDbPath).writeAsBytesSync(content);
+      } else if (entry.name.startsWith('images/')) {
+        final name = p.basename(entry.name);
+        if (name.isNotEmpty) {
+          File(p.join(imgDir, name)).writeAsBytesSync(content);
+        }
       }
     }
 
@@ -90,18 +98,6 @@ class BackupService {
       await _importNew(tempDb);
     }
     await tempDb.close();
-
-    // Extract images
-    final imgDir = await imagesDir();
-    for (final entry in archive) {
-      if (!entry.isFile) continue;
-      if (entry.name.startsWith('images/')) {
-        final name = p.basename(entry.name);
-        if (name.isEmpty) continue;
-        File(p.join(imgDir, name))
-            .writeAsBytesSync(entry.content as List<int>);
-      }
-    }
   }
 
   Future<void> _importOld(Database src) async {

@@ -40,6 +40,9 @@ migrate_working_dir/
 # Claude Code project settings
 .claude/
 
+# Context/planning docs
+Meal Macros Calculator - App Summary.md
+
 # Symbolication related
 app.*.symbols
 
