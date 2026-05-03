@@ -883,6 +883,8 @@ h2.section-group::after{content:'';flex:1;height:1px;background:var(--border);}
     <button class="plat-tab" onclick="showPlat('cloud',this)">Cloud Function</button>
     <button class="plat-tab" onclick="showPlat('desktop',this)">Desktop / Mobile</button>
     <button class="plat-tab" onclick="showPlat('lib',this)">Library / Plugin</button>
+    <button class="plat-tab" onclick="showPlat('android',this)">Android</button>
+    <button class="plat-tab" onclick="showPlat('flutter',this)">Flutter</button>
   </div>
 
   <div class="plat-panel active" id="plat-web">
@@ -949,6 +951,37 @@ h2.section-group::after{content:'';flex:1;height:1px;background:var(--border);}
         <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Works correctly when consumed in a clean project with no extra setup</div></div>
         <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">README includes a minimal working example</div></div>
         <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">LICENSE file is present and appropriate</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="plat-panel" id="plat-android">
+    <div class="section">
+      <div class="section-body" style="border-top:none;">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Adaptive icons use XML vector drawables (mipmap-anydpi-v26) — not PNGs; safe zone is inner 72dp of the 108dp canvas; icons outside safe zone get clipped by some launchers</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">All required permissions declared explicitly in AndroidManifest.xml — INTERNET is easy to miss and silently blocks all HTTP calls</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Android 11+ requires a &lt;queries&gt; block for implicit intents (HTTPS links, custom schemes) — without it canLaunchUrl() always returns false</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Release keystore generated once with keytool -genkey and stored securely offline — losing it means you can never publish updates to the same app identity</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Keystore and key.properties are never committed to source control (.gitignore both)</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">For CI: keystore is base64-encoded and stored as a GitHub secret alongside KEYSTORE_PASSWORD, KEY_PASSWORD, KEY_ALIAS — decoded at build time</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Wireless ADB: pair once via Settings → Developer Options → Wireless Debugging → Pair with code; reconnect each session with adb connect ip:port (port changes per session)</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">When migrating data from .NET apps: DateTime may be stored as .NET ticks (100ns since 0001-01-01), not Unix ms — convert with: unixMs = ticks / 10000 - 62135596800000</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Can't auto-install updates on Android — update dialogs must open the release URL in the browser; no silent installer pattern like Windows</div></div>
+      </div>
+    </div>
+  </div>
+
+  <div class="plat-panel" id="plat-flutter">
+    <div class="section">
+      <div class="section-body" style="border-top:none;">
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">CI requires Java 17 before Flutter setup (actions/setup-java@v4, distribution: temurin) — missing Java causes cryptic build failures</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Cache Flutter SDK in CI keyed on pubspec.lock hash — saves 2+ min per run; stale cache auto-busts when dependencies change</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Stamp the git tag version into pubspec.yaml before building so PackageInfo.version matches the release tag at runtime</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">DB schema changes: bump the version number in openDatabase and handle all upgrade paths in onUpgrade — skipping a version breaks users upgrading across multiple releases</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Use package_info_plus for current app version and dart:io HttpClient for GitHub API calls — no extra HTTP package needed</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">Persist "skip this version" per tag in SharedPreferences — prevents the update dialog from re-appearing every launch after the user dismisses it</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">APK release output path: build/app/outputs/flutter-apk/app-release.apk</div></div>
+        <div class="item" onclick="toggleItem(this)"><div class="checkbox"></div><div class="item-text">AsyncNotifier mutations (add/save/delete) should rethrow on failure — let the UI catch and show a SnackBar rather than silently swallowing DB errors</div></div>
       </div>
     </div>
   </div>

@@ -171,13 +171,23 @@ class BackupService {
       }).toList();
       meals.add(Meal(
         id: mealId,
-        createdAt: DateTime.fromMillisecondsSinceEpoch(
-            (mRow['CreatedAt'] as int?) ??
-                DateTime.now().millisecondsSinceEpoch),
+        createdAt: _parseDotNetDate(mRow['CreatedAt']),
         items: items,
       ));
     }
     await _mealDao.insertAll(meals);
+  }
+
+  // .NET DateTime ticks (100ns since Jan 1, 0001) vs Unix ms (since Jan 1, 1970).
+  // Values > 1e15 are ticks; smaller values are already Unix ms.
+  static DateTime _parseDotNetDate(dynamic value) {
+    if (value == null) return DateTime.now();
+    final raw = value as int;
+    if (raw > 1000000000000000) {
+      const dotNetEpochOffsetMs = 62135596800000; // ms between 0001-01-01 and 1970-01-01
+      return DateTime.fromMillisecondsSinceEpoch(raw ~/ 10000 - dotNetEpochOffsetMs);
+    }
+    return DateTime.fromMillisecondsSinceEpoch(raw);
   }
 
   Future<void> _importNew(Database src) async {
