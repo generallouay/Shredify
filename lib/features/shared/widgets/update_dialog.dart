@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_markdown/flutter_markdown.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/services/update_service.dart';
 
@@ -29,17 +30,25 @@ class UpdateDialog extends StatelessWidget {
             const SizedBox(height: 10),
             Container(
               width: double.infinity,
+              constraints: const BoxConstraints(maxHeight: 200),
               padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: const Color(0xFF1C1C1E),
                 borderRadius: BorderRadius.circular(8),
               ),
-              child: Text(
-                info.releaseNotes!.length > 240
-                    ? '${info.releaseNotes!.substring(0, 237)}…'
-                    : info.releaseNotes!,
-                style:
-                    const TextStyle(fontSize: 12, color: Colors.white54),
+              child: Markdown(
+                data: info.releaseNotes!,
+                shrinkWrap: true,
+                padding: EdgeInsets.zero,
+                styleSheet: MarkdownStyleSheet(
+                  p: const TextStyle(fontSize: 12, color: Colors.white60),
+                  h1: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold),
+                  h2: const TextStyle(fontSize: 13, color: Colors.white, fontWeight: FontWeight.bold),
+                  h3: const TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600),
+                  h4: const TextStyle(fontSize: 12, color: Colors.white70, fontWeight: FontWeight.w600),
+                  listBullet: const TextStyle(fontSize: 12, color: Colors.white60),
+                  code: const TextStyle(fontSize: 11, color: Colors.white38),
+                ),
               ),
             ),
           ],
