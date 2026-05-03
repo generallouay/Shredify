@@ -7,6 +7,7 @@ import '../../core/models/quick_entry.dart';
 import '../../core/models/macro_totals.dart';
 import '../../core/models/daily_goals.dart';
 import '../../core/providers/daily_provider.dart';
+import '../../core/providers/meals_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/providers/quick_entries_provider.dart';
 import '../../core/services/update_service.dart';
@@ -44,13 +45,21 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
       builder: (_) => const QuickEntryDialog(),
     );
     if (entry == null || !mounted) return;
-    await ref.read(quickEntriesProvider.notifier).add(entry);
+    try {
+      await ref.read(quickEntriesProvider.notifier).add(entry);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save entry: $e')));
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final today = DateTime.now();
     final todayKey = DateTime(today.year, today.month, today.day);
+    final mealsAsync = ref.watch(mealsProvider);
     final todayMeals = ref.watch(dailyMealsProvider(todayKey));
     final todayEntries = ref.watch(dailyQuickEntriesProvider(todayKey));
     final todayTotals = ref.watch(dailyTotalsProvider(todayKey));
@@ -97,7 +106,13 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          if (todayMeals.isEmpty)
+          if (mealsAsync.isLoading)
+            const Padding(
+              padding: EdgeInsets.symmetric(vertical: 16),
+              child: Center(
+                  child: CircularProgressIndicator(strokeWidth: 2)),
+            )
+          else if (todayMeals.isEmpty)
             _EmptyHint(
               icon: Icons.restaurant_outlined,
               message: 'No meals today — tap New Meal to start',

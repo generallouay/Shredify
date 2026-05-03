@@ -143,13 +143,20 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen> {
       photoPath: _photoPath,
     );
 
-    if (_isNew) {
-      await ref.read(foodsProvider.notifier).add(food);
-    } else {
-      await ref.read(foodsProvider.notifier).save(food);
+    try {
+      if (_isNew) {
+        await ref.read(foodsProvider.notifier).add(food);
+      } else {
+        await ref.read(foodsProvider.notifier).save(food);
+      }
+      if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        setState(() => _loading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save food: $e')));
+      }
     }
-
-    if (mounted) context.pop();
   }
 
   Future<void> _delete() async {

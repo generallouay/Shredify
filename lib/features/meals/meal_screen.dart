@@ -92,12 +92,19 @@ class _MealScreenState extends ConsumerState<MealScreen> {
       createdAt: _createdAt,
       items: _items.map((i) => i.copyWith(mealId: mealId)).toList(),
     );
-    if (_isNew) {
-      await ref.read(mealsProvider.notifier).add(meal);
-    } else {
-      await ref.read(mealsProvider.notifier).save(meal);
+    try {
+      if (_isNew) {
+        await ref.read(mealsProvider.notifier).add(meal);
+      } else {
+        await ref.read(mealsProvider.notifier).save(meal);
+      }
+      if (mounted) context.pop();
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save meal: $e')));
+      }
     }
-    if (mounted) context.pop();
   }
 
   MacroTotals get _totals => _items.fold(
