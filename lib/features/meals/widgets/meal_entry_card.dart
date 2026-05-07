@@ -3,57 +3,63 @@ import '../../../core/models/meal_entry.dart';
 
 class MealEntryCard extends StatelessWidget {
   final MealEntry entry;
+  final VoidCallback? onTap;
   final VoidCallback? onDelete;
 
-  const MealEntryCard({super.key, required this.entry, this.onDelete});
+  const MealEntryCard(
+      {super.key, required this.entry, this.onTap, this.onDelete});
 
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.primary;
     return Card(
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(12),
+          child: Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: BoxDecoration(
+                  color: color.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: Icon(Icons.bolt_outlined, color: color, size: 22),
               ),
-              child: Icon(Icons.bolt_outlined, color: color, size: 22),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    entry.description ?? 'Entry',
-                    style: const TextStyle(fontWeight: FontWeight.w600),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    _macroLabel(),
-                    style: TextStyle(
-                        fontSize: 12,
-                        color: color,
-                        fontWeight: FontWeight.w500),
-                  ),
-                ],
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      entry.description ?? 'Entry',
+                      style: const TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      _macroLabel(),
+                      style: TextStyle(
+                          fontSize: 12,
+                          color: color,
+                          fontWeight: FontWeight.w500),
+                    ),
+                  ],
+                ),
               ),
-            ),
-            if (onDelete != null)
-              IconButton(
-                icon: const Icon(Icons.delete_outline,
-                    size: 18, color: Colors.white38),
-                onPressed: onDelete,
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
-          ],
+              if (onDelete != null)
+                IconButton(
+                  icon: const Icon(Icons.delete_outline,
+                      size: 18, color: Colors.white38),
+                  onPressed: onDelete,
+                  padding: EdgeInsets.zero,
+                  constraints: const BoxConstraints(),
+                ),
+            ],
+          ),
         ),
       ),
     );

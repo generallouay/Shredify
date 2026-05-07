@@ -105,6 +105,22 @@ class _DayPage extends ConsumerStatefulWidget {
 }
 
 class _DayPageState extends ConsumerState<_DayPage> {
+  Future<void> _editQuickEntry(QuickEntry entry) async {
+    final edited = await showDialog<QuickEntry>(
+      context: context,
+      builder: (_) => QuickEntryDialog(initialEntry: entry),
+    );
+    if (edited == null || !mounted) return;
+    try {
+      await ref.read(quickEntriesProvider.notifier).updateEntry(edited);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to update entry: $e')));
+      }
+    }
+  }
+
   Future<void> _addQuickEntry() async {
     final entry = await showDialog<QuickEntry>(
       context: context,
@@ -237,6 +253,7 @@ class _DayPageState extends ConsumerState<_DayPage> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: _QuickEntryCard(
                   entry: e,
+                  onTap: () => _editQuickEntry(e),
                   onDelete: () => ref
                       .read(quickEntriesProvider.notifier)
                       .delete(e.id),
@@ -279,7 +296,7 @@ class _DaySummaryCard extends StatelessWidget {
               value: totals.kcal,
               goal: goals.kcal,
               unit: 'kcal',
-              color: const Color(0xFF00BFA5),
+              style: _BarStyle.calories,
             ),
             const SizedBox(height: 10),
             _GoalBar(
@@ -287,7 +304,7 @@ class _DaySummaryCard extends StatelessWidget {
               value: totals.protein,
               goal: goals.protein,
               unit: 'g',
-              color: Colors.blue,
+              style: _BarStyle.protein,
             ),
             const SizedBox(height: 10),
             _GoalBar(
@@ -295,7 +312,7 @@ class _DaySummaryCard extends StatelessWidget {
               value: totals.carbs,
               goal: goals.carbs,
               unit: 'g',
-              color: Colors.orange,
+              style: _BarStyle.carbs,
             ),
             const SizedBox(height: 10),
             _GoalBar(
@@ -303,7 +320,7 @@ class _DaySummaryCard extends StatelessWidget {
               value: totals.fat,
               goal: goals.fat,
               unit: 'g',
-              color: Colors.pink,
+              style: _BarStyle.fat,
             ),
           ],
         ),
@@ -312,25 +329,61 @@ class _DaySummaryCard extends StatelessWidget {
   }
 }
 
+enum _BarStyle { calories, protein, carbs, fat }
+
 class _GoalBar extends StatelessWidget {
   final String label;
   final double value;
   final double goal;
   final String unit;
-  final Color color;
+  final _BarStyle style;
 
   const _GoalBar({
     required this.label,
     required this.value,
     required this.goal,
     required this.unit,
-    required this.color,
+    required this.style,
   });
+
+  Color _barColor(double progress) {
+    switch (style) {
+      case _BarStyle.calories:
+        // green under goal, red over
+        return progress >= 1.0 ? Colors.red : const Color(0xFF4CAF50);
+      case _BarStyle.protein:
+        // red → green as it fills (more protein = better)
+        return Color.lerp(
+            const Color(0xFFEF5350), const Color(0xFF4CAF50), progress)!;
+      case _BarStyle.carbs:
+        // orange → green (eating less is fine, not alarming)
+        return Color.lerp(
+            const Color(0xFFFF9800), const Color(0xFF4CAF50), progress)!;
+      case _BarStyle.fat:
+        // neutral blueGrey always
+        return Colors.blueGrey;
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    final progress =
-        goal > 0 ? (value / goal).clamp(0.0, 1.0) : 0.0;
+    final progress = goal > 0 ? (value / goal).clamp(0.0, 1.0) : 0.0;
+    final remaining = goal - value;
+    final isOver = remaining < 0;
+
+    String rightText;
+    Color rightColor;
+    if (isOver) {
+      rightText =
+          '+${(-remaining).toStringAsFixed(0)} $unit over';
+      rightColor = style == _BarStyle.calories
+          ? const Color(0xFFEF5350)
+          : Colors.white54;
+    } else {
+      rightText = '${remaining.toStringAsFixed(0)} $unit left';
+      rightColor = Colors.white54;
+    }
+
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -339,10 +392,8 @@ class _GoalBar extends StatelessWidget {
           children: [
             Text(label,
                 style: const TextStyle(fontSize: 13, color: Colors.white70)),
-            Text(
-              '${value.toStringAsFixed(0)} / ${goal.toStringAsFixed(0)} $unit',
-              style: const TextStyle(fontSize: 12, color: Colors.white54),
-            ),
+            Text(rightText,
+                style: TextStyle(fontSize: 12, color: rightColor)),
           ],
         ),
         const SizedBox(height: 4),
@@ -352,9 +403,7 @@ class _GoalBar extends StatelessWidget {
             value: progress,
             minHeight: 6,
             backgroundColor: Colors.white12,
-            valueColor: AlwaysStoppedAnimation<Color>(
-              progress >= 1.0 ? Colors.orange : color,
-            ),
+            valueColor: AlwaysStoppedAnimation<Color>(_barColor(progress)),
           ),
         ),
       ],
@@ -421,15 +470,19 @@ class _MealListCard extends StatelessWidget {
 
 class _QuickEntryCard extends StatelessWidget {
   final QuickEntry entry;
+  final VoidCallback? onTap;
   final VoidCallback onDelete;
   const _QuickEntryCard(
-      {required this.entry, required this.onDelete});
+      {required this.entry, this.onTap, required this.onDelete});
 
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.primary;
     return Card(
-      child: Padding(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
         padding: const EdgeInsets.fromLTRB(16, 12, 8, 12),
         child: Row(
           children: [
@@ -471,6 +524,7 @@ class _QuickEntryCard extends StatelessWidget {
               constraints: const BoxConstraints(),
             ),
           ],
+        ),
         ),
       ),
     );

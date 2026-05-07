@@ -5,7 +5,8 @@ import '../../../core/models/meal_food_item.dart';
 
 class MeasurementDialog extends StatefulWidget {
   final Food food;
-  const MeasurementDialog({super.key, required this.food});
+  final MealFoodItem? initialItem;
+  const MeasurementDialog({super.key, required this.food, this.initialItem});
 
   @override
   State<MeasurementDialog> createState() => _MeasurementDialogState();
@@ -13,17 +14,46 @@ class MeasurementDialog extends StatefulWidget {
 
 class _MeasurementDialogState extends State<MeasurementDialog> {
   late MeasurementMethod _method;
-  final _ctrl1 = TextEditingController();
-  final _ctrl2 = TextEditingController();
+  late final TextEditingController _ctrl1;
+  late final TextEditingController _ctrl2;
+
+  bool get _isEditing => widget.initialItem != null;
+
+  static String _fmt(double? v) {
+    if (v == null) return '';
+    return v == v.truncateToDouble()
+        ? v.toInt().toString()
+        : v.toStringAsFixed(2);
+  }
 
   @override
   void initState() {
     super.initState();
-    _method = widget.food.type == FoodType.canister
-        ? MeasurementMethod.canister
-        : widget.food.type == FoodType.container
-            ? MeasurementMethod.container
-            : MeasurementMethod.standard;
+    final item = widget.initialItem;
+    _method = item?.method ??
+        (widget.food.type == FoodType.canister
+            ? MeasurementMethod.canister
+            : widget.food.type == FoodType.container
+                ? MeasurementMethod.container
+                : MeasurementMethod.standard);
+
+    // Pre-fill fields when editing
+    if (item != null) {
+      switch (item.method) {
+        case MeasurementMethod.standard:
+          _ctrl1 = TextEditingController(text: _fmt(item.weightGrams));
+          _ctrl2 = TextEditingController();
+        case MeasurementMethod.container:
+          _ctrl1 = TextEditingController(text: _fmt(item.weightBefore));
+          _ctrl2 = TextEditingController(text: _fmt(item.weightAfter));
+        case MeasurementMethod.canister:
+          _ctrl1 = TextEditingController(text: _fmt(item.canCount));
+          _ctrl2 = TextEditingController();
+      }
+    } else {
+      _ctrl1 = TextEditingController();
+      _ctrl2 = TextEditingController();
+    }
   }
 
   @override
@@ -71,8 +101,8 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
     double? canCount,
   }) =>
       MealFoodItem(
-        id: '',
-        mealId: '',
+        id: widget.initialItem?.id ?? '',
+        mealId: widget.initialItem?.mealId ?? '',
         foodId: widget.food.id,
         method: _method,
         weightGrams: weightGrams,
@@ -105,7 +135,6 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
                     ?.copyWith(fontWeight: FontWeight.bold)),
             const SizedBox(height: 16),
 
-            // Method selector
             Text('Measurement',
                 style: Theme.of(context)
                     .textTheme
@@ -140,7 +169,6 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
             ),
             const SizedBox(height: 16),
 
-            // Inputs
             if (_method == MeasurementMethod.standard)
               TextField(
                 controller: _ctrl1,
@@ -175,7 +203,8 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
               TextField(
                 controller: _ctrl1,
                 autofocus: true,
-                keyboardType: TextInputType.number,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
                   labelText: 'Number of cans',
                   helperText:
@@ -195,7 +224,7 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
                 Expanded(
                   child: FilledButton(
                     onPressed: _confirm,
-                    child: const Text('Add'),
+                    child: Text(_isEditing ? 'Save' : 'Add'),
                   ),
                 ),
               ],
@@ -222,7 +251,7 @@ class _MethodChip extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
         decoration: BoxDecoration(
-          color: selected ? color.withOpacity(0.2) : const Color(0xFF2C2C2E),
+          color: selected ? color.withValues(alpha: 0.2) : const Color(0xFF2C2C2E),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
               color: selected ? color : Colors.transparent, width: 1.5),

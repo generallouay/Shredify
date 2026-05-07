@@ -12,6 +12,7 @@ import '../../core/providers/database_provider.dart';
 import 'widgets/meal_food_item_card.dart';
 import 'widgets/meal_entry_card.dart';
 import 'widgets/meal_entry_dialog.dart';
+import 'widgets/measurement_dialog.dart';
 
 class MealScreen extends ConsumerStatefulWidget {
   final String? mealId;
@@ -72,6 +73,27 @@ class _MealScreenState extends ConsumerState<MealScreen> {
     );
     if (entry == null || !mounted) return;
     setState(() => _entries.add(entry));
+  }
+
+  Future<void> _editEntry(int index) async {
+    final edited = await showDialog<MealEntry>(
+      context: context,
+      builder: (_) => MealEntryDialog(initialEntry: _entries[index]),
+    );
+    if (edited == null || !mounted) return;
+    setState(() => _entries[index] = edited);
+  }
+
+  Future<void> _editItem(int index) async {
+    final item = _items[index];
+    if (item.food == null) return;
+    final edited = await showDialog<MealFoodItem>(
+      context: context,
+      builder: (_) =>
+          MeasurementDialog(food: item.food!, initialItem: item),
+    );
+    if (edited == null || !mounted) return;
+    setState(() => _items[index] = edited);
   }
 
   void _removeItem(int index) {
@@ -228,6 +250,7 @@ class _MealScreenState extends ConsumerState<MealScreen> {
                         return MealFoodItemCard(
                           item: _items[i],
                           showMacros: true,
+                          onTap: () => _editItem(i),
                           onWeightAfterChanged: (v) =>
                               _updateWeightAfter(i, v),
                           onDelete: () => _removeItem(i),
@@ -236,6 +259,7 @@ class _MealScreenState extends ConsumerState<MealScreen> {
                       final ei = i - _items.length;
                       return MealEntryCard(
                         entry: _entries[ei],
+                        onTap: () => _editEntry(ei),
                         onDelete: () => _removeEntry(ei),
                       );
                     },

@@ -15,6 +15,13 @@ class QuickEntriesNotifier
     state = AsyncData([entry, ...?state.valueOrNull]);
   }
 
+  Future<void> updateEntry(QuickEntry entry) async {
+    await ref.read(quickEntryDaoProvider).insert(entry);
+    state = AsyncData(
+        state.valueOrNull?.map((e) => e.id == entry.id ? entry : e).toList() ??
+            []);
+  }
+
   Future<void> delete(String id) async {
     await ref.read(quickEntryDaoProvider).delete(id);
     state = AsyncData(

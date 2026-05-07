@@ -6,6 +6,7 @@ import '../../shared/widgets/macro_row.dart';
 class MealFoodItemCard extends StatelessWidget {
   final MealFoodItem item;
   final bool showMacros;
+  final VoidCallback? onTap;
   final ValueChanged<double>? onWeightAfterChanged;
   final VoidCallback? onDelete;
 
@@ -13,6 +14,7 @@ class MealFoodItemCard extends StatelessWidget {
     super.key,
     required this.item,
     this.showMacros = false,
+    this.onTap,
     this.onWeightAfterChanged,
     this.onDelete,
   });
@@ -23,7 +25,10 @@ class MealFoodItemCard extends StatelessWidget {
     final food = item.food;
 
     return Card(
-      child: Padding(
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
         padding: const EdgeInsets.all(12),
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -89,6 +94,7 @@ class MealFoodItemCard extends StatelessWidget {
               ),
           ],
         ),
+      ),
       ),
     );
   }
