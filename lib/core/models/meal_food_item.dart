@@ -11,7 +11,7 @@ class MealFoodItem {
   final double? weightGrams;
   final double? weightBefore;
   final double? weightAfter;
-  final int? canCount;
+  final double? canCount;
   final Food? food;
 
   const MealFoodItem({
@@ -64,7 +64,7 @@ class MealFoodItem {
     double? weightGrams,
     double? weightBefore,
     double? weightAfter,
-    int? canCount,
+    double? canCount,
     Food? food,
     bool clearWeightAfter = false,
   }) =>
@@ -107,7 +107,7 @@ class MealFoodItem {
         weightAfter: map['weight_after'] != null
             ? (map['weight_after'] as num).toDouble()
             : null,
-        canCount: map['can_count'] as int?,
+        canCount: (map['can_count'] as num?)?.toDouble(),
         food: food,
       );
 }

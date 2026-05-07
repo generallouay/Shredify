@@ -23,11 +23,30 @@ class HomeScreen extends ConsumerStatefulWidget {
 }
 
 class _HomeScreenState extends ConsumerState<HomeScreen> {
+  // page 1000 = today; lower = past days
+  static const int _todayIndex = 1000;
+  late final PageController _pageController;
+  int _currentPage = _todayIndex;
+
   @override
   void initState() {
     super.initState();
+    _pageController = PageController(initialPage: _todayIndex);
     WidgetsBinding.instance
         .addPostFrameCallback((_) => _checkForUpdate());
+  }
+
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  DateTime _pageToDay(int page) {
+    final offset = page - _todayIndex;
+    final now = DateTime.now();
+    final today = DateTime(now.year, now.month, now.day);
+    return today.add(Duration(days: offset));
   }
 
   Future<void> _checkForUpdate() async {
@@ -39,31 +58,9 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
     );
   }
 
-  Future<void> _addQuickEntry() async {
-    final entry = await showDialog<QuickEntry>(
-      context: context,
-      builder: (_) => const QuickEntryDialog(),
-    );
-    if (entry == null || !mounted) return;
-    try {
-      await ref.read(quickEntriesProvider.notifier).add(entry);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to save entry: $e')));
-      }
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
-    final today = DateTime.now();
-    final todayKey = DateTime(today.year, today.month, today.day);
-    final mealsAsync = ref.watch(mealsProvider);
-    final todayMeals = ref.watch(dailyMealsProvider(todayKey));
-    final todayEntries = ref.watch(dailyQuickEntriesProvider(todayKey));
-    final todayTotals = ref.watch(dailyTotalsProvider(todayKey));
-    final goalsAsync = ref.watch(dailyGoalsProvider);
+    final isToday = _currentPage == _todayIndex;
 
     return Scaffold(
       appBar: AppBar(
@@ -76,108 +73,190 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
           ),
         ],
       ),
-      floatingActionButton: FloatingActionButton.extended(
-        onPressed: () => context.push('/meals/new'),
-        icon: const Icon(Icons.add),
-        label: const Text('New Meal'),
-      ),
-      body: ListView(
-        padding: const EdgeInsets.all(16),
-        children: [
-          goalsAsync.when(
-            data: (goals) =>
-                _TodayCard(totals: todayTotals, goals: goals),
-            loading: () => const SizedBox.shrink(),
-            error: (_, __) => const SizedBox.shrink(),
-          ),
-          const SizedBox(height: 24),
-
-          // ── Today's Meals ──────────────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                "Today's Meals${todayMeals.isNotEmpty ? ' (${todayMeals.length})' : ''}",
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (mealsAsync.isLoading)
-            const Padding(
-              padding: EdgeInsets.symmetric(vertical: 16),
-              child: Center(
-                  child: CircularProgressIndicator(strokeWidth: 2)),
+      floatingActionButton: isToday
+          ? FloatingActionButton.extended(
+              onPressed: () => context.push('/meals/new'),
+              icon: const Icon(Icons.add),
+              label: const Text('New Meal'),
             )
-          else if (todayMeals.isEmpty)
-            _EmptyHint(
-              icon: Icons.restaurant_outlined,
-              message: 'No meals today — tap New Meal to start',
-            )
-          else
-            ...todayMeals.map((m) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _MealListCard(
-                    meal: m,
-                    onTap: () => context.push('/meals/${m.id}'),
-                  ),
-                )),
-
-          const SizedBox(height: 24),
-
-          // ── Quick Entries ──────────────────────────────────────
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                'Quick Entries',
-                style: Theme.of(context)
-                    .textTheme
-                    .titleMedium
-                    ?.copyWith(fontWeight: FontWeight.w600),
-              ),
-              TextButton.icon(
-                onPressed: _addQuickEntry,
-                icon: const Icon(Icons.add, size: 16),
-                label: const Text('Add'),
-                style: TextButton.styleFrom(
-                    visualDensity: VisualDensity.compact),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
-          if (todayEntries.isEmpty)
-            _EmptyHint(
-              icon: Icons.bolt_outlined,
-              message: 'No quick entries — use Add for snacks or extras',
-            )
-          else
-            ...todayEntries.map((e) => Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: _QuickEntryCard(
-                    entry: e,
-                    onDelete: () => ref
-                        .read(quickEntriesProvider.notifier)
-                        .delete(e.id),
-                  ),
-                )),
-
-          const SizedBox(height: 90),
-        ],
+          : null,
+      body: PageView.builder(
+        controller: _pageController,
+        // allow up to ~3 years back, no future
+        itemCount: _todayIndex + 1,
+        onPageChanged: (page) => setState(() => _currentPage = page),
+        itemBuilder: (context, page) {
+          final day = _pageToDay(page);
+          return _DayPage(day: day);
+        },
       ),
     );
   }
 }
 
-// ── Today summary card ──────────────────────────────────────────────
+// ── Day page ─────────────────────────────────────────────────────────
 
-class _TodayCard extends StatelessWidget {
+class _DayPage extends ConsumerStatefulWidget {
+  final DateTime day;
+  const _DayPage({required this.day});
+
+  @override
+  ConsumerState<_DayPage> createState() => _DayPageState();
+}
+
+class _DayPageState extends ConsumerState<_DayPage> {
+  Future<void> _addQuickEntry() async {
+    final entry = await showDialog<QuickEntry>(
+      context: context,
+      builder: (_) => const QuickEntryDialog(),
+    );
+    if (entry == null || !mounted) return;
+    // timestamp the entry to the viewed day (using current time-of-day)
+    final now = DateTime.now();
+    final stamped = entry.copyWith(
+      createdAt: DateTime(
+          widget.day.year, widget.day.month, widget.day.day,
+          now.hour, now.minute, now.second),
+    );
+    try {
+      await ref.read(quickEntriesProvider.notifier).add(stamped);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save entry: $e')));
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final day = widget.day;
+    final mealsAsync = ref.watch(mealsProvider);
+    final dayMeals = ref.watch(dailyMealsProvider(day));
+    final dayEntries = ref.watch(dailyQuickEntriesProvider(day));
+    final dayTotals = ref.watch(dailyTotalsProvider(day));
+    final goalsAsync = ref.watch(dailyGoalsProvider);
+
+    final now = DateTime.now();
+    final isToday = day.year == now.year &&
+        day.month == now.month &&
+        day.day == now.day;
+    final yesterday = DateTime(now.year, now.month, now.day)
+        .subtract(const Duration(days: 1));
+    final isYesterday = day.year == yesterday.year &&
+        day.month == yesterday.month &&
+        day.day == yesterday.day;
+
+    final dateFmt = DateFormat('EEEE, MMM d').format(day);
+    String dayLabel;
+    if (isToday) {
+      dayLabel = 'Today — $dateFmt';
+    } else if (isYesterday) {
+      dayLabel = 'Yesterday — $dateFmt';
+    } else {
+      dayLabel = dateFmt;
+    }
+
+    return ListView(
+      padding: const EdgeInsets.all(16),
+      children: [
+        goalsAsync.when(
+          data: (goals) => _DaySummaryCard(
+              totals: dayTotals, goals: goals, dayLabel: dayLabel),
+          loading: () => const SizedBox.shrink(),
+          error: (_, __) => const SizedBox.shrink(),
+        ),
+        const SizedBox(height: 24),
+
+        // ── Meals ──────────────────────────────────────────────────
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              '${isToday ? "Today's" : DateFormat("MMM d").format(day)} Meals'
+              '${dayMeals.isNotEmpty ? " (${dayMeals.length})" : ""}',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (mealsAsync.isLoading)
+          const Padding(
+            padding: EdgeInsets.symmetric(vertical: 16),
+            child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+          )
+        else if (dayMeals.isEmpty)
+          _EmptyHint(
+            icon: Icons.restaurant_outlined,
+            message: isToday
+                ? 'No meals today — tap New Meal to start'
+                : 'No meals on this day',
+          )
+        else
+          ...dayMeals.map((m) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _MealListCard(
+                  meal: m,
+                  onTap: () => context.push('/meals/${m.id}'),
+                ),
+              )),
+
+        const SizedBox(height: 24),
+
+        // ── Quick Entries ──────────────────────────────────────────
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              'Quick Entries',
+              style: Theme.of(context)
+                  .textTheme
+                  .titleMedium
+                  ?.copyWith(fontWeight: FontWeight.w600),
+            ),
+            TextButton.icon(
+              onPressed: _addQuickEntry,
+              icon: const Icon(Icons.add, size: 16),
+              label: const Text('Add'),
+              style: TextButton.styleFrom(
+                  visualDensity: VisualDensity.compact),
+            ),
+          ],
+        ),
+        const SizedBox(height: 10),
+        if (dayEntries.isEmpty)
+          _EmptyHint(
+            icon: Icons.bolt_outlined,
+            message: 'No quick entries — use Add for snacks or extras',
+          )
+        else
+          ...dayEntries.map((e) => Padding(
+                padding: const EdgeInsets.only(bottom: 8),
+                child: _QuickEntryCard(
+                  entry: e,
+                  onDelete: () => ref
+                      .read(quickEntriesProvider.notifier)
+                      .delete(e.id),
+                ),
+              )),
+
+        const SizedBox(height: 90),
+      ],
+    );
+  }
+}
+
+// ── Day summary card ──────────────────────────────────────────────────
+
+class _DaySummaryCard extends StatelessWidget {
   final MacroTotals totals;
   final DailyGoals goals;
-  const _TodayCard({required this.totals, required this.goals});
+  final String dayLabel;
+  const _DaySummaryCard(
+      {required this.totals, required this.goals, required this.dayLabel});
 
   @override
   Widget build(BuildContext context) {
@@ -188,7 +267,7 @@ class _TodayCard extends StatelessWidget {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Today — ${DateFormat('EEEE, MMM d').format(DateTime.now())}',
+              dayLabel,
               style: Theme.of(context)
                   .textTheme
                   .titleSmall
@@ -259,12 +338,10 @@ class _GoalBar extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label,
-                style: const TextStyle(
-                    fontSize: 13, color: Colors.white70)),
+                style: const TextStyle(fontSize: 13, color: Colors.white70)),
             Text(
               '${value.toStringAsFixed(0)} / ${goal.toStringAsFixed(0)} $unit',
-              style: const TextStyle(
-                  fontSize: 12, color: Colors.white54),
+              style: const TextStyle(fontSize: 12, color: Colors.white54),
             ),
           ],
         ),
@@ -318,7 +395,7 @@ class _MealListCard extends StatelessWidget {
                       style: const TextStyle(
                           color: Colors.white54, fontSize: 13),
                     ),
-                    if (meal.isCalculated) ...[
+                    if (totals.kcal > 0) ...[
                       const SizedBox(height: 8),
                       MacroRow(
                         kcal: totals.kcal,

@@ -21,8 +21,8 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
   String _query = '';
   FoodType? _typeFilter;
 
-  // canister foods: foodId → count
-  final Map<String, int> _canisterCounts = {};
+  // canister foods: foodId → count (supports 0.5 increments)
+  final Map<String, double> _canisterCounts = {};
 
   // standard/container foods: list of added items (same food can appear multiple times)
   final List<MealFoodItem> _nonCanisterItems = [];
@@ -49,17 +49,17 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
 
   void _incrementCanister(Food food) {
     setState(() {
-      _canisterCounts[food.id] = (_canisterCounts[food.id] ?? 0) + 1;
+      _canisterCounts[food.id] = (_canisterCounts[food.id] ?? 0) + 0.5;
     });
   }
 
   void _decrementCanister(Food food) {
     setState(() {
       final current = _canisterCounts[food.id] ?? 0;
-      if (current <= 1) {
+      if (current <= 0.5) {
         _canisterCounts.remove(food.id);
       } else {
-        _canisterCounts[food.id] = current - 1;
+        _canisterCounts[food.id] = current - 0.5;
       }
     });
   }
@@ -176,7 +176,7 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
                       onAdd: () => food.type == FoodType.canister
                           ? _incrementCanister(food)
                           : _addStandardContainer(food),
-                      onDecrement: food.type == FoodType.canister && canCount > 0
+                      onDecrement: food.type == FoodType.canister && canCount > 0.0
                           ? () => _decrementCanister(food)
                           : null,
                     );
@@ -196,7 +196,7 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
 
 class _FoodTile extends StatelessWidget {
   final Food food;
-  final int canisterCount;
+  final double canisterCount;
   final int addedCount;
   final VoidCallback onAdd;
   final VoidCallback? onDecrement;
@@ -208,6 +208,9 @@ class _FoodTile extends StatelessWidget {
     required this.onAdd,
     this.onDecrement,
   });
+
+  static String _fmtCount(double v) =>
+      v == v.truncateToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
 
   @override
   Widget build(BuildContext context) {
@@ -257,7 +260,7 @@ class _FoodTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                '$canisterCount',
+                _fmtCount(canisterCount),
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 16,

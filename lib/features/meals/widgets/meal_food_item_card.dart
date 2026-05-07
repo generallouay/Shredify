@@ -94,6 +94,9 @@ class MealFoodItemCard extends StatelessWidget {
   }
 }
 
+String _fmtCount(double v) =>
+    v == v.truncateToDouble() ? v.toInt().toString() : v.toStringAsFixed(1);
+
 class _MeasurementInfo extends StatelessWidget {
   final MealFoodItem item;
   const _MeasurementInfo({required this.item});
@@ -111,7 +114,7 @@ class _MeasurementInfo extends StatelessWidget {
           '${item.weightAfter != null ? '  •  After: ${item.weightAfter!.toStringAsFixed(0)}g  •  Consumed: ${item.consumedGrams?.toStringAsFixed(0) ?? '?'}g' : ''}',
           style: style),
       MeasurementMethod.canister => Text(
-          '${item.canCount ?? '?'} can${(item.canCount ?? 0) != 1 ? 's' : ''}  •  ${item.consumedGrams?.toStringAsFixed(0) ?? '?'}g',
+          '${item.canCount != null ? _fmtCount(item.canCount!) : '?'} can${(item.canCount ?? 0) != 1 ? 's' : ''}  •  ${item.consumedGrams?.toStringAsFixed(0) ?? '?'}g',
           style: style),
     };
   }

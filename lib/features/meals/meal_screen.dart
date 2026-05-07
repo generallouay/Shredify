@@ -8,7 +8,9 @@ import '../../core/models/meal_food_item.dart';
 import '../../core/models/macro_totals.dart';
 import '../../core/providers/meals_provider.dart';
 import '../../core/providers/database_provider.dart';
+import '../../core/providers/quick_entries_provider.dart';
 import 'widgets/meal_food_item_card.dart';
+import '../home/widgets/quick_entry_dialog.dart';
 
 class MealScreen extends ConsumerStatefulWidget {
   final String? mealId;
@@ -21,7 +23,6 @@ class MealScreen extends ConsumerStatefulWidget {
 class _MealScreenState extends ConsumerState<MealScreen> {
   List<MealFoodItem> _items = [];
   DateTime _createdAt = DateTime.now();
-  bool _calculated = false;
   bool _loading = true;
   Meal? _original;
 
@@ -44,7 +45,6 @@ class _MealScreenState extends ConsumerState<MealScreen> {
         _original = meal;
         _items = List.from(meal.items);
         _createdAt = meal.createdAt;
-        _calculated = meal.isCalculated;
         _loading = false;
       });
     } else if (mounted) {
@@ -59,15 +59,11 @@ class _MealScreenState extends ConsumerState<MealScreen> {
       _items.addAll(items.map(
         (i) => i.copyWith(id: const Uuid().v4(), mealId: _original?.id ?? ''),
       ));
-      _calculated = false;
     });
   }
 
   void _removeItem(int index) {
-    setState(() {
-      _items.removeAt(index);
-      _calculated = false;
-    });
+    setState(() => _items.removeAt(index));
   }
 
   void _updateWeightAfter(int index, double weightAfter) {
@@ -76,8 +72,20 @@ class _MealScreenState extends ConsumerState<MealScreen> {
     });
   }
 
-  void _calculate() {
-    setState(() => _calculated = true);
+  Future<void> _addQuickEntry() async {
+    final entry = await showDialog(
+      context: context,
+      builder: (_) => const QuickEntryDialog(),
+    );
+    if (entry == null || !mounted) return;
+    try {
+      await ref.read(quickEntriesProvider.notifier).add(entry);
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to save entry: $e')));
+      }
+    }
   }
 
   Future<void> _save() async {
@@ -189,7 +197,7 @@ class _MealScreenState extends ConsumerState<MealScreen> {
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
                     itemBuilder: (context, i) => MealFoodItemCard(
                       item: _items[i],
-                      showMacros: _calculated,
+                      showMacros: true,
                       onWeightAfterChanged: (v) => _updateWeightAfter(i, v),
                       onDelete: () => _removeItem(i),
                     ),
@@ -206,21 +214,18 @@ class _MealScreenState extends ConsumerState<MealScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (_calculated && _items.isNotEmpty)
-                  _TotalsCard(totals: _totals),
-                if (_calculated && _items.isNotEmpty)
-                  const SizedBox(height: 10),
+                if (_items.isNotEmpty) _TotalsCard(totals: _totals),
+                if (_items.isNotEmpty) const SizedBox(height: 10),
                 Row(
                   children: [
-                    if (_items.isNotEmpty)
-                      Expanded(
-                        child: OutlinedButton.icon(
-                          onPressed: _calculate,
-                          icon: const Icon(Icons.calculate_outlined, size: 18),
-                          label: const Text('Calculate'),
-                        ),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: _addQuickEntry,
+                        icon: const Icon(Icons.bolt_outlined, size: 18),
+                        label: const Text('Quick Entry'),
                       ),
-                    if (_items.isNotEmpty) const SizedBox(width: 10),
+                    ),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: FilledButton.icon(
                         onPressed: _addFood,

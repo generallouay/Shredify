@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:archive/archive_io.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
@@ -25,6 +26,8 @@ class BackupService {
     return dir.path;
   }
 
+  static const _channel = MethodChannel('com.shredify.shredify/downloads');
+
   Future<String> createBackup() async {
     final archive = Archive();
 
@@ -45,16 +48,16 @@ class BackupService {
       }
     }
 
-    final zipBytes = ZipEncoder().encode(archive)!;
+    final zipBytes = Uint8List.fromList(ZipEncoder().encode(archive)!);
     final ts = DateFormat('yyyyMMdd_HHmmss').format(DateTime.now());
     final fileName = 'shredify_backup_$ts.zip';
 
-    Directory? outDir = await getExternalStorageDirectory();
-    outDir ??= await getApplicationDocumentsDirectory();
-
-    final outPath = p.join(outDir.path, fileName);
-    File(outPath).writeAsBytesSync(zipBytes);
-    return outPath;
+    // Save to public Downloads folder via platform channel
+    final path = await _channel.invokeMethod<String>('saveToDownloads', {
+      'fileName': fileName,
+      'bytes': zipBytes,
+    });
+    return path ?? fileName;
   }
 
   Future<void> restoreBackup(String zipPath) async {
@@ -136,11 +139,11 @@ class BackupService {
       final itemRows = await src.query('MealFoodItems',
           where: 'MealId = ?', whereArgs: [mealId]);
       final items = itemRows.map((r) {
-        final canCount = r['CanCount'] as int?;
+        final canCount = (r['CanCount'] as num?)?.toDouble();
         final isContainer = (r['IsContainer'] as int?) == 1;
         MeasurementMethod method;
         double? weightGrams, weightBefore, weightAfter;
-        int? cc;
+        double? cc;
         if (canCount != null && canCount > 0) {
           method = MeasurementMethod.canister;
           cc = canCount;

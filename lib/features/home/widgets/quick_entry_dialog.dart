@@ -15,6 +15,7 @@ class _QuickEntryDialogState extends State<QuickEntryDialog> {
   final _proteinCtrl = TextEditingController();
   final _carbsCtrl = TextEditingController();
   final _fatCtrl = TextEditingController();
+  final _multiplierCtrl = TextEditingController(text: '1');
 
   @override
   void dispose() {
@@ -23,21 +24,28 @@ class _QuickEntryDialogState extends State<QuickEntryDialog> {
     _proteinCtrl.dispose();
     _carbsCtrl.dispose();
     _fatCtrl.dispose();
+    _multiplierCtrl.dispose();
     super.dispose();
   }
 
+  double? _scaled(String text, double mul) {
+    final v = double.tryParse(text.trim());
+    return v == null ? null : v * mul;
+  }
+
   void _submit() {
-    final kcal = double.tryParse(_kcalCtrl.text.trim());
-    if (kcal == null || kcal <= 0) return;
+    final kcalRaw = double.tryParse(_kcalCtrl.text.trim());
+    if (kcalRaw == null || kcalRaw <= 0) return;
+    final mul = double.tryParse(_multiplierCtrl.text.trim()) ?? 1.0;
 
     final desc = _descCtrl.text.trim();
     Navigator.of(context).pop(QuickEntry(
       id: const Uuid().v4(),
       createdAt: DateTime.now(),
-      kcal: kcal,
-      protein: double.tryParse(_proteinCtrl.text.trim()),
-      carbs: double.tryParse(_carbsCtrl.text.trim()),
-      fat: double.tryParse(_fatCtrl.text.trim()),
+      kcal: kcalRaw * mul,
+      protein: _scaled(_proteinCtrl.text, mul),
+      carbs: _scaled(_carbsCtrl.text, mul),
+      fat: _scaled(_fatCtrl.text, mul),
       description: desc.isEmpty ? null : desc,
     ));
   }
@@ -96,6 +104,17 @@ class _QuickEntryDialogState extends State<QuickEntryDialog> {
               decoration: const InputDecoration(
                 labelText: 'Fat',
                 suffixText: 'g',
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _multiplierCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Multiplier',
+                hintText: '1',
+                helperText: 'e.g. 2.5 for 250g of a 100g entry',
               ),
             ),
           ],

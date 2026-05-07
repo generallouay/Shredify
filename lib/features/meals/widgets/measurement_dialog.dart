@@ -21,7 +21,9 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
     super.initState();
     _method = widget.food.type == FoodType.canister
         ? MeasurementMethod.canister
-        : MeasurementMethod.standard;
+        : widget.food.type == FoodType.container
+            ? MeasurementMethod.container
+            : MeasurementMethod.standard;
   }
 
   @override
@@ -56,7 +58,7 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
           _showError('Enter number of cans');
           return;
         }
-        item = _build(canCount: v1.round());
+        item = _build(canCount: v1);
         break;
     }
     context.pop(item);
@@ -66,7 +68,7 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
     double? weightGrams,
     double? weightBefore,
     double? weightAfter,
-    int? canCount,
+    double? canCount,
   }) =>
       MealFoodItem(
         id: '',
