@@ -64,6 +64,4 @@ jobs:
 
             ### Install
             Download `Shredify-v${{ env.VERSION }}.apk`, enable *Install from unknown sources* on your device, and open the file.
-
-            > Built from commit ${{ github.sha }}
           files: build/app/outputs/flutter-apk/Shredify-v${{ env.VERSION }}.apk

@@ -47,18 +47,28 @@ class UpdateService {
 
       final json = jsonDecode(body) as Map<String, dynamic>;
       final tag = (json['tag_name'] as String?) ?? '';
-      final htmlUrl = (json['html_url'] as String?) ?? '';
       final notes = json['body'] as String?;
 
-      if (tag.isEmpty || htmlUrl.isEmpty) return null;
+      if (tag.isEmpty) return null;
       if (skipped == tag) return null;
 
       final latest = tag.startsWith('v') ? tag.substring(1) : tag;
       if (!_isNewer(latest, currentVersion)) return null;
 
+      // Find the APK asset URL; fall back to release page if not found
+      final assets = (json['assets'] as List<dynamic>?) ?? [];
+      final apkAsset = assets.cast<Map<String, dynamic>>().where(
+            (a) => (a['name'] as String? ?? '').endsWith('.apk'),
+          ).firstOrNull;
+      final downloadUrl = (apkAsset?['browser_download_url'] as String?) ??
+          (json['html_url'] as String?) ??
+          '';
+
+      if (downloadUrl.isEmpty) return null;
+
       return UpdateInfo(
         version: tag,
-        releaseUrl: htmlUrl,
+        releaseUrl: downloadUrl,
         releaseNotes: (notes?.trim().isEmpty ?? true) ? null : notes,
       );
     } catch (_) {
