@@ -1,5 +1,6 @@
 import 'package:sqflite/sqflite.dart';
 import '../models/meal.dart';
+import '../models/meal_entry.dart';
 import '../models/meal_food_item.dart';
 import 'app_database.dart';
 import 'food_dao.dart';
@@ -14,8 +15,10 @@ class MealDao {
     final mealRows = await db.query('meals', orderBy: 'created_at DESC');
     final meals = <Meal>[];
     for (final row in mealRows) {
-      final items = await _itemsForMeal(db, row['id'] as String);
-      meals.add(Meal.fromMap(row, items: items));
+      final id = row['id'] as String;
+      final items = await _itemsForMeal(db, id);
+      final entries = await _entriesForMeal(db, id);
+      meals.add(Meal.fromMap(row, items: items, entries: entries));
     }
     return meals;
   }
@@ -25,7 +28,8 @@ class MealDao {
     final rows = await db.query('meals', where: 'id = ?', whereArgs: [id]);
     if (rows.isEmpty) return null;
     final items = await _itemsForMeal(db, id);
-    return Meal.fromMap(rows.first, items: items);
+    final entries = await _entriesForMeal(db, id);
+    return Meal.fromMap(rows.first, items: items, entries: entries);
   }
 
   Future<Meal?> getLatest() async {
@@ -33,15 +37,18 @@ class MealDao {
     final rows =
         await db.query('meals', orderBy: 'created_at DESC', limit: 1);
     if (rows.isEmpty) return null;
-    final items = await _itemsForMeal(db, rows.first['id'] as String);
-    return Meal.fromMap(rows.first, items: items);
+    final id = rows.first['id'] as String;
+    final items = await _itemsForMeal(db, id);
+    final entries = await _entriesForMeal(db, id);
+    return Meal.fromMap(rows.first, items: items, entries: entries);
   }
 
   Future<List<Meal>> getForDay(DateTime day) async {
     final db = await _db.database;
-    final start = DateTime(day.year, day.month, day.day).millisecondsSinceEpoch;
-    final end =
-        DateTime(day.year, day.month, day.day, 23, 59, 59, 999).millisecondsSinceEpoch;
+    final start =
+        DateTime(day.year, day.month, day.day).millisecondsSinceEpoch;
+    final end = DateTime(day.year, day.month, day.day, 23, 59, 59, 999)
+        .millisecondsSinceEpoch;
     final rows = await db.query(
       'meals',
       where: 'created_at >= ? AND created_at <= ?',
@@ -50,8 +57,10 @@ class MealDao {
     );
     final meals = <Meal>[];
     for (final row in rows) {
-      final items = await _itemsForMeal(db, row['id'] as String);
-      meals.add(Meal.fromMap(row, items: items));
+      final id = row['id'] as String;
+      final items = await _itemsForMeal(db, id);
+      final entries = await _entriesForMeal(db, id);
+      meals.add(Meal.fromMap(row, items: items, entries: entries));
     }
     return meals;
   }
@@ -67,12 +76,23 @@ class MealDao {
     return items;
   }
 
+  Future<List<MealEntry>> _entriesForMeal(
+      Database db, String mealId) async {
+    final rows = await db.query('meal_entries',
+        where: 'meal_id = ?', whereArgs: [mealId]);
+    return rows.map(MealEntry.fromMap).toList();
+  }
+
   Future<void> insert(Meal meal) async {
     final db = await _db.database;
     await db.insert('meals', meal.toMap(),
         conflictAlgorithm: ConflictAlgorithm.replace);
     for (final item in meal.items) {
       await db.insert('meal_food_items', item.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    for (final entry in meal.entries) {
+      await db.insert('meal_entries', entry.toMap(),
           conflictAlgorithm: ConflictAlgorithm.replace);
     }
   }
@@ -85,6 +105,12 @@ class MealDao {
         where: 'meal_id = ?', whereArgs: [meal.id]);
     for (final item in meal.items) {
       await db.insert('meal_food_items', item.toMap(),
+          conflictAlgorithm: ConflictAlgorithm.replace);
+    }
+    await db.delete('meal_entries',
+        where: 'meal_id = ?', whereArgs: [meal.id]);
+    for (final entry in meal.entries) {
+      await db.insert('meal_entries', entry.toMap(),
           conflictAlgorithm: ConflictAlgorithm.replace);
     }
   }
@@ -104,12 +130,17 @@ class MealDao {
         batch.insert('meal_food_items', item.toMap(),
             conflictAlgorithm: ConflictAlgorithm.replace);
       }
+      for (final entry in meal.entries) {
+        batch.insert('meal_entries', entry.toMap(),
+            conflictAlgorithm: ConflictAlgorithm.replace);
+      }
     }
     await batch.commit(noResult: true);
   }
 
   Future<void> deleteAll() async {
     final db = await _db.database;
+    await db.delete('meal_entries');
     await db.delete('meal_food_items');
     await db.delete('meals');
   }

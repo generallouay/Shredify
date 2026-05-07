@@ -4,13 +4,14 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/models/meal.dart';
+import '../../core/models/meal_entry.dart';
 import '../../core/models/meal_food_item.dart';
 import '../../core/models/macro_totals.dart';
 import '../../core/providers/meals_provider.dart';
 import '../../core/providers/database_provider.dart';
-import '../../core/providers/quick_entries_provider.dart';
 import 'widgets/meal_food_item_card.dart';
-import '../home/widgets/quick_entry_dialog.dart';
+import 'widgets/meal_entry_card.dart';
+import 'widgets/meal_entry_dialog.dart';
 
 class MealScreen extends ConsumerStatefulWidget {
   final String? mealId;
@@ -22,6 +23,7 @@ class MealScreen extends ConsumerStatefulWidget {
 
 class _MealScreenState extends ConsumerState<MealScreen> {
   List<MealFoodItem> _items = [];
+  List<MealEntry> _entries = [];
   DateTime _createdAt = DateTime.now();
   bool _loading = true;
   Meal? _original;
@@ -44,6 +46,7 @@ class _MealScreenState extends ConsumerState<MealScreen> {
       setState(() {
         _original = meal;
         _items = List.from(meal.items);
+        _entries = List.from(meal.entries);
         _createdAt = meal.createdAt;
         _loading = false;
       });
@@ -62,8 +65,21 @@ class _MealScreenState extends ConsumerState<MealScreen> {
     });
   }
 
+  Future<void> _addEntry() async {
+    final entry = await showDialog<MealEntry>(
+      context: context,
+      builder: (_) => const MealEntryDialog(),
+    );
+    if (entry == null || !mounted) return;
+    setState(() => _entries.add(entry));
+  }
+
   void _removeItem(int index) {
     setState(() => _items.removeAt(index));
+  }
+
+  void _removeEntry(int index) {
+    setState(() => _entries.removeAt(index));
   }
 
   void _updateWeightAfter(int index, double weightAfter) {
@@ -72,26 +88,10 @@ class _MealScreenState extends ConsumerState<MealScreen> {
     });
   }
 
-  Future<void> _addQuickEntry() async {
-    final entry = await showDialog(
-      context: context,
-      builder: (_) => const QuickEntryDialog(),
-    );
-    if (entry == null || !mounted) return;
-    try {
-      await ref.read(quickEntriesProvider.notifier).add(entry);
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Failed to save entry: $e')));
-      }
-    }
-  }
-
   Future<void> _save() async {
-    if (_items.isEmpty) {
+    if (_items.isEmpty && _entries.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Add at least one food')));
+          const SnackBar(content: Text('Add at least one food or entry')));
       return;
     }
     final mealId = _original?.id ?? const Uuid().v4();
@@ -99,6 +99,7 @@ class _MealScreenState extends ConsumerState<MealScreen> {
       id: mealId,
       createdAt: _createdAt,
       items: _items.map((i) => i.copyWith(mealId: mealId)).toList(),
+      entries: _entries.map((e) => e.copyWith(mealId: mealId)).toList(),
     );
     try {
       if (_isNew) {
@@ -144,16 +145,32 @@ class _MealScreenState extends ConsumerState<MealScreen> {
     }
   }
 
-  MacroTotals get _totals => _items.fold(
+  MacroTotals get _totals {
+    final itemTotals = _items.fold(
         MacroTotals.zero,
-        (acc, item) => item.macros != null ? acc + item.macros! : acc,
-      );
+        (acc, item) => item.macros != null ? acc + item.macros! : acc);
+    final entryTotals = _entries.fold(
+        MacroTotals.zero,
+        (acc, e) => acc +
+            MacroTotals(
+                kcal: e.kcal,
+                protein: e.protein ?? 0,
+                carbs: e.carbs ?? 0,
+                fat: e.fat ?? 0));
+    return itemTotals + entryTotals;
+  }
+
+  bool get _hasContent => _items.isNotEmpty || _entries.isNotEmpty;
 
   @override
   Widget build(BuildContext context) {
     if (_loading) {
       return const Scaffold(body: Center(child: CircularProgressIndicator()));
     }
+
+    // Build a unified list: food items first, then entries
+    final totalCount = _items.length + _entries.length;
+
     return Scaffold(
       appBar: AppBar(
         title: Text(_isNew ? 'New Meal' : 'Edit Meal'),
@@ -172,7 +189,7 @@ class _MealScreenState extends ConsumerState<MealScreen> {
       body: Column(
         children: [
           Expanded(
-            child: _items.isEmpty
+            child: !_hasContent
                 ? Center(
                     child: Column(
                       mainAxisSize: MainAxisSize.min,
@@ -180,27 +197,48 @@ class _MealScreenState extends ConsumerState<MealScreen> {
                         const Icon(Icons.add_circle_outline,
                             size: 48, color: Colors.white24),
                         const SizedBox(height: 12),
-                        const Text('No foods added yet',
+                        const Text('Nothing added yet',
                             style: TextStyle(color: Colors.white38)),
                         const SizedBox(height: 16),
-                        FilledButton.icon(
-                          onPressed: _addFood,
-                          icon: const Icon(Icons.add),
-                          label: const Text('Add Food'),
+                        Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            OutlinedButton.icon(
+                              onPressed: _addEntry,
+                              icon: const Icon(Icons.bolt_outlined, size: 18),
+                              label: const Text('Add Entry'),
+                            ),
+                            const SizedBox(width: 12),
+                            FilledButton.icon(
+                              onPressed: _addFood,
+                              icon: const Icon(Icons.add),
+                              label: const Text('Add Food'),
+                            ),
+                          ],
                         ),
                       ],
                     ),
                   )
                 : ListView.separated(
                     padding: const EdgeInsets.fromLTRB(16, 16, 16, 100),
-                    itemCount: _items.length,
+                    itemCount: totalCount,
                     separatorBuilder: (_, __) => const SizedBox(height: 8),
-                    itemBuilder: (context, i) => MealFoodItemCard(
-                      item: _items[i],
-                      showMacros: true,
-                      onWeightAfterChanged: (v) => _updateWeightAfter(i, v),
-                      onDelete: () => _removeItem(i),
-                    ),
+                    itemBuilder: (context, i) {
+                      if (i < _items.length) {
+                        return MealFoodItemCard(
+                          item: _items[i],
+                          showMacros: true,
+                          onWeightAfterChanged: (v) =>
+                              _updateWeightAfter(i, v),
+                          onDelete: () => _removeItem(i),
+                        );
+                      }
+                      final ei = i - _items.length;
+                      return MealEntryCard(
+                        entry: _entries[ei],
+                        onDelete: () => _removeEntry(ei),
+                      );
+                    },
                   ),
           ),
 
@@ -214,15 +252,15 @@ class _MealScreenState extends ConsumerState<MealScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                if (_items.isNotEmpty) _TotalsCard(totals: _totals),
-                if (_items.isNotEmpty) const SizedBox(height: 10),
+                if (_hasContent) _TotalsCard(totals: _totals),
+                if (_hasContent) const SizedBox(height: 10),
                 Row(
                   children: [
                     Expanded(
                       child: OutlinedButton.icon(
-                        onPressed: _addQuickEntry,
+                        onPressed: _addEntry,
                         icon: const Icon(Icons.bolt_outlined, size: 18),
-                        label: const Text('Quick Entry'),
+                        label: const Text('Add Entry'),
                       ),
                     ),
                     const SizedBox(width: 10),
@@ -254,9 +292,9 @@ class _TotalsCard extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: color.withOpacity(0.1),
+        color: color.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: color.withOpacity(0.3)),
+        border: Border.all(color: color.withValues(alpha: 0.3)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceAround,

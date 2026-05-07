@@ -15,7 +15,7 @@ class AppDatabase {
     final path = join(await getDatabasesPath(), 'shredify.db');
     return openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _onCreate,
       onUpgrade: _onUpgrade,
     );
@@ -58,12 +58,31 @@ class AppDatabase {
     await db.execute(
         'CREATE INDEX idx_mfi_meal ON meal_food_items(meal_id)');
     await _createQuickEntriesTable(db);
+    await _createMealEntriesTable(db);
   }
 
   Future<void> _onUpgrade(Database db, int oldVersion, int newVersion) async {
     if (oldVersion < 2) {
       await _createQuickEntriesTable(db);
     }
+    if (oldVersion < 3) {
+      await _createMealEntriesTable(db);
+    }
+  }
+
+  Future<void> _createMealEntriesTable(Database db) async {
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS meal_entries (
+        id TEXT PRIMARY KEY,
+        meal_id TEXT NOT NULL,
+        kcal REAL NOT NULL,
+        protein REAL,
+        carbs REAL,
+        fat REAL,
+        description TEXT,
+        FOREIGN KEY (meal_id) REFERENCES meals(id) ON DELETE CASCADE
+      )
+    ''');
   }
 
   Future<void> _createQuickEntriesTable(Database db) async {
