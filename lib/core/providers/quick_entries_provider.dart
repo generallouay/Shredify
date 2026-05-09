@@ -1,36 +1,29 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/quick_entry.dart';
 import '../models/macro_totals.dart';
-import 'database_provider.dart';
+import '../repositories/quick_entry_repository.dart';
+import 'auth_provider.dart';
 
-class QuickEntriesNotifier
-    extends AsyncNotifier<List<QuickEntry>> {
+class QuickEntriesNotifier extends StreamNotifier<List<QuickEntry>> {
   @override
-  Future<List<QuickEntry>> build() async {
-    return ref.read(quickEntryDaoProvider).getAll();
+  Stream<List<QuickEntry>> build() {
+    final user = ref.watch(authStateProvider).valueOrNull;
+    if (user == null) return Stream.value(const <QuickEntry>[]);
+    return ref.watch(quickEntryRepositoryProvider).watchAll();
   }
 
-  Future<void> add(QuickEntry entry) async {
-    await ref.read(quickEntryDaoProvider).insert(entry);
-    state = AsyncData([entry, ...?state.valueOrNull]);
-  }
+  Future<void> add(QuickEntry entry) =>
+      ref.read(quickEntryRepositoryProvider).insert(entry);
 
-  Future<void> updateEntry(QuickEntry entry) async {
-    await ref.read(quickEntryDaoProvider).insert(entry);
-    state = AsyncData(
-        state.valueOrNull?.map((e) => e.id == entry.id ? entry : e).toList() ??
-            []);
-  }
+  Future<void> updateEntry(QuickEntry entry) =>
+      ref.read(quickEntryRepositoryProvider).insert(entry);
 
-  Future<void> delete(String id) async {
-    await ref.read(quickEntryDaoProvider).delete(id);
-    state = AsyncData(
-        state.valueOrNull?.where((e) => e.id != id).toList() ?? []);
-  }
+  Future<void> delete(String id) =>
+      ref.read(quickEntryRepositoryProvider).delete(id);
 }
 
 final quickEntriesProvider =
-    AsyncNotifierProvider<QuickEntriesNotifier, List<QuickEntry>>(
+    StreamNotifierProvider<QuickEntriesNotifier, List<QuickEntry>>(
         QuickEntriesNotifier.new);
 
 final dailyQuickEntriesProvider =

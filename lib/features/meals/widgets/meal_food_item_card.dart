@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../core/models/meal_food_item.dart';
+import '../../shared/widgets/food_photo.dart';
 import '../../shared/widgets/macro_row.dart';
 
 class MealFoodItemCard extends StatelessWidget {
@@ -33,24 +33,7 @@ class MealFoodItemCard extends StatelessWidget {
         child: Row(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Thumbnail
-            if (food?.photoPath != null && File(food!.photoPath!).existsSync())
-              ClipRRect(
-                borderRadius: BorderRadius.circular(8),
-                child: Image.file(File(food.photoPath!),
-                    width: 48, height: 48, fit: BoxFit.cover),
-              )
-            else
-              Container(
-                width: 48,
-                height: 48,
-                decoration: BoxDecoration(
-                  color: const Color(0xFF2C2C2E),
-                  borderRadius: BorderRadius.circular(8),
-                ),
-                child: const Icon(Icons.fastfood_outlined,
-                    size: 20, color: Colors.white38),
-              ),
+            FoodPhoto(photoPath: food?.photoPath),
             const SizedBox(width: 12),
             Expanded(
               child: Column(

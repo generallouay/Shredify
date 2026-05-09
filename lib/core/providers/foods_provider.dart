@@ -1,31 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/food.dart';
-import 'database_provider.dart';
+import '../repositories/food_repository.dart';
+import 'auth_provider.dart';
+
+class FoodsNotifier extends StreamNotifier<List<Food>> {
+  @override
+  Stream<List<Food>> build() {
+    final user = ref.watch(authStateProvider).valueOrNull;
+    if (user == null) return Stream.value(const <Food>[]);
+    return ref.watch(foodRepositoryProvider).watchAll();
+  }
+
+  Future<void> add(Food food) =>
+      ref.read(foodRepositoryProvider).insert(food);
+
+  Future<void> save(Food food) =>
+      ref.read(foodRepositoryProvider).update(food);
+
+  Future<void> delete(String id) =>
+      ref.read(foodRepositoryProvider).delete(id);
+}
 
 final foodsProvider =
-    AsyncNotifierProvider<FoodsNotifier, List<Food>>(FoodsNotifier.new);
-
-class FoodsNotifier extends AsyncNotifier<List<Food>> {
-  @override
-  Future<List<Food>> build() => ref.read(foodDaoProvider).getAll();
-
-  Future<void> add(Food food) async {
-    await ref.read(foodDaoProvider).insert(food);
-    ref.invalidateSelf();
-  }
-
-  Future<void> save(Food food) async {
-    await ref.read(foodDaoProvider).update(food);
-    ref.invalidateSelf();
-  }
-
-  Future<void> delete(String id) async {
-    await ref.read(foodDaoProvider).delete(id);
-    ref.invalidateSelf();
-  }
-
-  Future<void> reload() async => ref.invalidateSelf();
-}
+    StreamNotifierProvider<FoodsNotifier, List<Food>>(FoodsNotifier.new);
 
 final foodSearchProvider = StateProvider<String>((ref) => '');
 

@@ -8,7 +8,7 @@ import '../../core/models/meal_entry.dart';
 import '../../core/models/meal_food_item.dart';
 import '../../core/models/macro_totals.dart';
 import '../../core/providers/meals_provider.dart';
-import '../../core/providers/database_provider.dart';
+import '../../core/repositories/meal_repository.dart';
 import 'widgets/meal_food_item_card.dart';
 import 'widgets/meal_entry_card.dart';
 import 'widgets/meal_entry_dialog.dart';
@@ -42,7 +42,7 @@ class _MealScreenState extends ConsumerState<MealScreen> {
   }
 
   Future<void> _loadMeal() async {
-    final meal = await ref.read(mealDaoProvider).getById(widget.mealId!);
+    final meal = await ref.read(mealRepositoryProvider).getById(widget.mealId!);
     if (meal != null && mounted) {
       setState(() {
         _original = meal;

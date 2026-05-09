@@ -1,4 +1,3 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
@@ -6,6 +5,7 @@ import 'package:uuid/uuid.dart';
 import '../../core/models/food.dart';
 import '../../core/models/meal_food_item.dart';
 import '../../core/providers/foods_provider.dart';
+import '../shared/widgets/food_photo.dart';
 import '../shared/widgets/macro_row.dart';
 import 'widgets/measurement_dialog.dart';
 
@@ -222,7 +222,7 @@ class _FoodTile extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.center,
         children: [
-          _FoodPhoto(photoPath: food.photoPath),
+          FoodPhoto(photoPath: food.photoPath),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -322,35 +322,6 @@ class _FoodTile extends StatelessWidget {
           ],
         ],
       ),
-    );
-  }
-}
-
-class _FoodPhoto extends StatelessWidget {
-  final String? photoPath;
-  const _FoodPhoto({this.photoPath});
-
-  @override
-  Widget build(BuildContext context) {
-    if (photoPath != null && File(photoPath!).existsSync()) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(8),
-        child: Image.file(
-          File(photoPath!),
-          width: 48,
-          height: 48,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    return Container(
-      width: 48,
-      height: 48,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(8),
-      ),
-      child: const Icon(Icons.fastfood_outlined, color: Colors.white38, size: 20),
     );
   }
 }

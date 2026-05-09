@@ -12,6 +12,8 @@ import '../../features/foods/food_detail_screen.dart';
 import '../../features/meals/meal_screen.dart';
 import '../../features/meals/meal_history_screen.dart';
 import '../../features/meals/food_selector_page.dart';
+import '../../features/recipes/recipe_screen.dart';
+import '../../features/recipes/recipes_screen.dart';
 import '../../features/daily/daily_screen.dart';
 import '../../features/settings/settings_screen.dart';
 
@@ -55,6 +57,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ]),
           StatefulShellBranch(routes: [
             GoRoute(
+                path: '/recipes',
+                builder: (_, __) => const RecipesScreen()),
+          ]),
+          StatefulShellBranch(routes: [
+            GoRoute(
                 path: '/history',
                 builder: (_, __) => const MealHistoryScreen()),
           ]),
@@ -72,6 +79,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           path: '/meals/:id',
           builder: (_, s) =>
               MealScreen(mealId: s.pathParameters['id'])),
+      GoRoute(
+          path: '/recipes/new',
+          builder: (_, __) => const RecipeScreen()),
+      GoRoute(
+          path: '/recipes/:id',
+          builder: (_, s) =>
+              RecipeScreen(recipeId: s.pathParameters['id'])),
       GoRoute(
           path: '/settings',
           builder: (_, __) => const SettingsScreen()),

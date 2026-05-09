@@ -1,6 +1,6 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import '../../../core/models/food.dart';
+import '../../shared/widgets/food_photo.dart';
 import '../../shared/widgets/macro_row.dart';
 
 class FoodCard extends StatelessWidget {
@@ -19,7 +19,12 @@ class FoodCard extends StatelessWidget {
           padding: const EdgeInsets.all(12),
           child: Row(
             children: [
-              _FoodPhoto(photoPath: food.photoPath),
+              FoodPhoto(
+                photoPath: food.photoPath,
+                width: 56,
+                height: 56,
+                borderRadius: BorderRadius.circular(10),
+              ),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -64,35 +69,6 @@ class FoodCard extends StatelessWidget {
           ),
         ),
       ),
-    );
-  }
-}
-
-class _FoodPhoto extends StatelessWidget {
-  final String? photoPath;
-  const _FoodPhoto({this.photoPath});
-
-  @override
-  Widget build(BuildContext context) {
-    if (photoPath != null && File(photoPath!).existsSync()) {
-      return ClipRRect(
-        borderRadius: BorderRadius.circular(10),
-        child: Image.file(
-          File(photoPath!),
-          width: 56,
-          height: 56,
-          fit: BoxFit.cover,
-        ),
-      );
-    }
-    return Container(
-      width: 56,
-      height: 56,
-      decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(10),
-      ),
-      child: const Icon(Icons.fastfood_outlined, color: Colors.white38, size: 24),
     );
   }
 }

@@ -10,7 +10,9 @@ import '../../core/providers/daily_provider.dart';
 import '../../core/providers/meals_provider.dart';
 import '../../core/providers/settings_provider.dart';
 import '../../core/providers/quick_entries_provider.dart';
+import '../../core/services/migration_service.dart';
 import '../../core/services/update_service.dart';
+import '../migration/migration_dialog.dart';
 import '../shared/widgets/macro_row.dart';
 import '../shared/widgets/update_dialog.dart';
 import 'widgets/quick_entry_dialog.dart';
@@ -32,8 +34,22 @@ class _HomeScreenState extends ConsumerState<HomeScreen> {
   void initState() {
     super.initState();
     _pageController = PageController(initialPage: _todayIndex);
-    WidgetsBinding.instance
-        .addPostFrameCallback((_) => _checkForUpdate());
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await _checkMigration();
+      if (!mounted) return;
+      await _checkForUpdate();
+    });
+  }
+
+  Future<void> _checkMigration() async {
+    try {
+      final needs =
+          await ref.read(migrationServiceProvider).needsMigration();
+      if (!needs || !mounted) return;
+      await showMigrationDialog(context, ref);
+    } catch (_) {
+      // Don't block the home screen on migration check failures.
+    }
   }
 
   @override

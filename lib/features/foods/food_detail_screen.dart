@@ -8,6 +8,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/models/food.dart';
 import '../../core/providers/foods_provider.dart';
+import '../shared/widgets/food_photo.dart';
 
 class FoodDetailScreen extends ConsumerStatefulWidget {
   final String? foodId;
@@ -408,21 +409,23 @@ class _PhotoWidget extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final hasPhoto = photoPath != null && File(photoPath!).existsSync();
     return Stack(
       children: [
-        ClipRRect(
+        FoodPhoto(
+          photoPath: photoPath,
+          width: 120,
+          height: 120,
           borderRadius: BorderRadius.circular(16),
-          child: hasPhoto
-              ? Image.file(File(photoPath!),
-                  width: 120, height: 120, fit: BoxFit.cover)
-              : Container(
-                  width: 120,
-                  height: 120,
-                  color: const Color(0xFF2C2C2E),
-                  child: const Icon(Icons.fastfood_outlined,
-                      size: 48, color: Colors.white24),
-                ),
+          placeholder: Container(
+            width: 120,
+            height: 120,
+            decoration: BoxDecoration(
+              color: const Color(0xFF2C2C2E),
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: const Icon(Icons.fastfood_outlined,
+                size: 48, color: Colors.white24),
+          ),
         ),
         if (editable)
           Positioned(
