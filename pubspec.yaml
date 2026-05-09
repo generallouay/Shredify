@@ -44,6 +44,6 @@ flutter_launcher_icons:
   android: true
   ios: false
   image_path: "Icon/diet.png"
-  adaptive_icon_background: "#0A0A0A"
-  adaptive_icon_foreground: "Icon/diet.png"
+  adaptive_icon_background: "#0F0F0F"
+  adaptive_icon_foreground: "Icon/diet_foreground.png"
   min_sdk_android: 21
