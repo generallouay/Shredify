@@ -1,0 +1,27 @@
+name: Print Release Keystore SHA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  print-sha:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: Decode keystore
+        run: |
+          echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 --decode > keystore.jks
+
+      - name: Print fingerprints
+        run: |
+          keytool -list -v \
+            -keystore keystore.jks \
+            -alias "${{ secrets.KEY_ALIAS }}" \
+            -storepass "${{ secrets.KEYSTORE_PASSWORD }}" \
+            -keypass "${{ secrets.KEY_PASSWORD }}" \
+            | grep -E '^(\s*SHA1|\s*SHA-256|Alias name|Owner|Issuer):'
