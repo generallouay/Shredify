@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "1035207762091",
+    "project_id": "shredify-39d64",
+    "storage_bucket": "shredify-39d64.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:1035207762091:android:24dd7310c55c8690ce97ee",
+        "android_client_info": {
+          "package_name": "com.shredify.shredify"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "1035207762091-latpu6dmg9o1e7qbkqpju7tckukh3s1m.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCPqCMfsZ0s09jXlmvv7aHRenD_ABX9zF0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "1035207762091-latpu6dmg9o1e7qbkqpju7tckukh3s1m.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
