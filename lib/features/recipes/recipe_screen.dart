@@ -9,6 +9,7 @@ import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/models/macro_totals.dart';
 import '../../core/models/meal.dart';
+import '../../core/models/meal_entry.dart';
 import '../../core/models/meal_food_item.dart';
 import '../../core/models/recipe.dart';
 import '../../core/providers/meals_provider.dart';
@@ -78,10 +79,9 @@ class _RecipeScreenState extends ConsumerState<RecipeScreen> {
     }
   }
 
-  Future<void> _pickPhoto() async {
+  Future<void> _pickPhoto(ImageSource source) async {
     final picker = ImagePicker();
-    final picked = await picker.pickImage(
-        source: ImageSource.camera, imageQuality: 85);
+    final picked = await picker.pickImage(source: source, imageQuality: 85);
     if (picked == null || !mounted) return;
     final docs = await getApplicationDocumentsDirectory();
     final dir = Directory(p.join(docs.path, 'shredify', 'images'));
@@ -90,6 +90,45 @@ class _RecipeScreenState extends ConsumerState<RecipeScreen> {
     final dest = p.join(dir.path, '${const Uuid().v4()}$ext');
     await File(picked.path).copy(dest);
     if (mounted) setState(() => _photoPath = dest);
+  }
+
+  void _showPhotoSheet() {
+    showModalBottomSheet(
+      context: context,
+      builder: (_) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt_outlined),
+              title: const Text('Take photo'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library_outlined),
+              title: const Text('Choose from gallery'),
+              onTap: () {
+                Navigator.pop(context);
+                _pickPhoto(ImageSource.gallery);
+              },
+            ),
+            if (_photoPath != null)
+              ListTile(
+                leading: const Icon(Icons.delete_outline, color: Colors.red),
+                title: const Text('Remove photo',
+                    style: TextStyle(color: Colors.red)),
+                onTap: () {
+                  Navigator.pop(context);
+                  setState(() => _photoPath = null);
+                },
+              ),
+          ],
+        ),
+      ),
+    );
   }
 
   Future<void> _addIngredient() async {
@@ -258,24 +297,37 @@ class _RecipeScreenState extends ConsumerState<RecipeScreen> {
     final factor = servings <= 0 ? 1.0 : consumed / servings;
     final mealId = const Uuid().v4();
     final items = <MealFoodItem>[];
+    final entries = <MealEntry>[];
     for (final ing in _ingredients) {
-      if (ing.food == null) continue; // skip custom (no macros to log)
-      items.add(MealFoodItem(
-        id: const Uuid().v4(),
-        mealId: mealId,
-        foodId: ing.foodId ?? ing.food!.id,
-        method: MeasurementMethod.standard,
-        weightGrams: ing.weightGrams * factor,
-        food: ing.food,
-      ));
+      if (ing.food != null) {
+        items.add(MealFoodItem(
+          id: const Uuid().v4(),
+          mealId: mealId,
+          foodId: ing.foodId ?? ing.food!.id,
+          method: MeasurementMethod.standard,
+          weightGrams: ing.weightGrams * factor,
+          food: ing.food,
+        ));
+      } else if (ing.hasCustomMacros) {
+        final m = ing.macros;
+        entries.add(MealEntry(
+          id: const Uuid().v4(),
+          mealId: mealId,
+          kcal: m.kcal * factor,
+          protein: m.protein * factor,
+          carbs: m.carbs * factor,
+          fat: m.fat * factor,
+          description: ing.displayName,
+        ));
+      }
     }
-    if (items.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('No linked-food ingredients to log')));
+    if (items.isEmpty && entries.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+          content: Text('No ingredients with macros to log')));
       return;
     }
     final meal = Meal(
-        id: mealId, createdAt: DateTime.now(), items: items, entries: const []);
+        id: mealId, createdAt: DateTime.now(), items: items, entries: entries);
     try {
       await ref.read(mealsProvider.notifier).add(meal);
       if (mounted) {
@@ -318,7 +370,7 @@ class _RecipeScreenState extends ConsumerState<RecipeScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               GestureDetector(
-                onTap: _pickPhoto,
+                onTap: _showPhotoSheet,
                 child: FoodPhoto(
                   photoPath: _photoPath,
                   width: 80,
@@ -509,7 +561,7 @@ class _IngredientTile extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     Text(
-                      ingredient.food == null
+                      ingredient.food == null && !ingredient.hasCustomMacros
                           ? '${ingredient.weightGrams.toStringAsFixed(0)}g  ·  custom (no macros)'
                           : '${ingredient.weightGrams.toStringAsFixed(0)}g  ·  ${m.kcal.toStringAsFixed(0)} kcal  ·  P${m.protein.toStringAsFixed(0)} C${m.carbs.toStringAsFixed(0)} F${m.fat.toStringAsFixed(0)}',
                       style:

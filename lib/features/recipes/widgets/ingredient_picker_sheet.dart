@@ -8,7 +8,8 @@ import '../../../core/providers/foods_provider.dart';
 import '../../shared/widgets/food_photo.dart';
 
 /// Bottom sheet that lets the user pick a food (existing in their library) and
-/// enter a weight, or add a custom ingredient (name + weight, no macros).
+/// enter a weight, or add a custom ingredient (name + weight + optional macros
+/// with a multiplier, no need to add to the foods library).
 /// Returns the resulting [RecipeIngredient] via Navigator.pop.
 class IngredientPickerSheet extends ConsumerStatefulWidget {
   final RecipeIngredient? initial;
@@ -23,6 +24,11 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
   final _searchCtrl = TextEditingController();
   final _weightCtrl = TextEditingController();
   final _customNameCtrl = TextEditingController();
+  final _kcalCtrl = TextEditingController();
+  final _proteinCtrl = TextEditingController();
+  final _carbsCtrl = TextEditingController();
+  final _fatCtrl = TextEditingController();
+  final _multiplierCtrl = TextEditingController(text: '1');
   Food? _selectedFood;
   bool _customMode = false;
 
@@ -37,16 +43,38 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
       } else if (init.customName != null) {
         _customMode = true;
         _customNameCtrl.text = init.customName!;
+        if (init.customKcal != null) _kcalCtrl.text = _fmt(init.customKcal!);
+        if (init.customProtein != null) {
+          _proteinCtrl.text = _fmt(init.customProtein!);
+        }
+        if (init.customCarbs != null) {
+          _carbsCtrl.text = _fmt(init.customCarbs!);
+        }
+        if (init.customFat != null) _fatCtrl.text = _fmt(init.customFat!);
       }
     }
   }
+
+  String _fmt(double v) =>
+      v == v.truncateToDouble() ? v.toInt().toString() : v.toStringAsFixed(2);
 
   @override
   void dispose() {
     _searchCtrl.dispose();
     _weightCtrl.dispose();
     _customNameCtrl.dispose();
+    _kcalCtrl.dispose();
+    _proteinCtrl.dispose();
+    _carbsCtrl.dispose();
+    _fatCtrl.dispose();
+    _multiplierCtrl.dispose();
     super.dispose();
+  }
+
+  double? _scaled(String text, double mul) {
+    final v = double.tryParse(text.trim());
+    if (v == null) return null;
+    return v * mul;
   }
 
   void _confirm() {
@@ -63,12 +91,17 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
             const SnackBar(content: Text('Custom ingredient needs a name')));
         return;
       }
+      final mul = double.tryParse(_multiplierCtrl.text.trim()) ?? 1.0;
       Navigator.pop(
           context,
           RecipeIngredient(
             id: widget.initial?.id ?? const Uuid().v4(),
             customName: name,
             weightGrams: weight,
+            customKcal: _scaled(_kcalCtrl.text, mul),
+            customProtein: _scaled(_proteinCtrl.text, mul),
+            customCarbs: _scaled(_carbsCtrl.text, mul),
+            customFat: _scaled(_fatCtrl.text, mul),
           ));
       return;
     }
@@ -124,7 +157,6 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
             const SizedBox(height: 12),
             TextField(
               controller: _weightCtrl,
-              autofocus: _customMode,
               keyboardType:
                   const TextInputType.numberWithOptions(decimal: true),
               inputFormatters: [
@@ -151,14 +183,77 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
   }
 
   Widget _buildCustomMode() {
-    return TextField(
-      controller: _customNameCtrl,
-      autofocus: true,
-      decoration: const InputDecoration(
-        labelText: 'Ingredient name',
-        hintText: 'e.g. Vanilla extract, baking powder',
-        helperText: "Won't contribute to macros",
-      ),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        TextField(
+          controller: _customNameCtrl,
+          autofocus: true,
+          textCapitalization: TextCapitalization.sentences,
+          decoration: const InputDecoration(
+            labelText: 'Ingredient name',
+            hintText: 'e.g. Eggs, vanilla extract',
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _kcalCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                    labelText: 'Kcal', suffixText: 'kcal'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: _proteinCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                    labelText: 'Protein', suffixText: 'g'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        Row(
+          children: [
+            Expanded(
+              child: TextField(
+                controller: _carbsCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                    labelText: 'Carbs', suffixText: 'g'),
+              ),
+            ),
+            const SizedBox(width: 8),
+            Expanded(
+              child: TextField(
+                controller: _fatCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                decoration: const InputDecoration(
+                    labelText: 'Fat', suffixText: 'g'),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        TextField(
+          controller: _multiplierCtrl,
+          keyboardType: const TextInputType.numberWithOptions(decimal: true),
+          decoration: const InputDecoration(
+            labelText: 'Multiplier',
+            hintText: '1',
+            helperText: 'e.g. 2 for 2× a 100g entry — leave macros blank to skip',
+          ),
+        ),
+      ],
     );
   }
 

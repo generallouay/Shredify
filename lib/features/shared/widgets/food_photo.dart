@@ -45,6 +45,9 @@ class FoodPhoto extends StatelessWidget {
     final radius = borderRadius ?? BorderRadius.circular(8);
 
     if (_isRemote) {
+      final dpr = MediaQuery.of(context).devicePixelRatio;
+      final memW = (width * dpr).round();
+      final memH = (height * dpr).round();
       return ClipRRect(
         borderRadius: radius,
         child: CachedNetworkImage(
@@ -52,6 +55,11 @@ class FoodPhoto extends StatelessWidget {
           width: width,
           height: height,
           fit: fit,
+          memCacheWidth: memW,
+          memCacheHeight: memH,
+          fadeInDuration: Duration.zero,
+          fadeOutDuration: Duration.zero,
+          placeholderFadeInDuration: Duration.zero,
           placeholder: (_, __) => _placeholder(),
           errorWidget: (_, __, ___) => _placeholder(),
         ),
@@ -63,7 +71,13 @@ class FoodPhoto extends StatelessWidget {
 
     return ClipRRect(
       borderRadius: radius,
-      child: Image.file(file, width: width, height: height, fit: fit),
+      child: Image.file(
+        file,
+        width: width,
+        height: height,
+        fit: fit,
+        gaplessPlayback: true,
+      ),
     );
   }
 }

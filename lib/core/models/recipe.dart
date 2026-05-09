@@ -9,6 +9,10 @@ class RecipeIngredient {
   final Food? food;
   final String? customName;
   final double weightGrams;
+  final double? customKcal;
+  final double? customProtein;
+  final double? customCarbs;
+  final double? customFat;
 
   const RecipeIngredient({
     required this.id,
@@ -16,19 +20,37 @@ class RecipeIngredient {
     this.food,
     this.customName,
     required this.weightGrams,
+    this.customKcal,
+    this.customProtein,
+    this.customCarbs,
+    this.customFat,
   });
 
   String get displayName => food?.name ?? customName ?? 'Ingredient';
 
+  bool get hasCustomMacros =>
+      food == null &&
+      ((customKcal ?? 0) > 0 ||
+          (customProtein ?? 0) > 0 ||
+          (customCarbs ?? 0) > 0 ||
+          (customFat ?? 0) > 0);
+
   MacroTotals get macros {
     final f = food;
-    if (f == null) return MacroTotals.zero;
-    final factor = weightGrams / 100.0;
+    if (f != null) {
+      final factor = weightGrams / 100.0;
+      return MacroTotals(
+        kcal: f.kcal * factor,
+        protein: f.protein * factor,
+        fat: f.fat * factor,
+        carbs: f.carbs * factor,
+      );
+    }
     return MacroTotals(
-      kcal: f.kcal * factor,
-      protein: f.protein * factor,
-      fat: f.fat * factor,
-      carbs: f.carbs * factor,
+      kcal: customKcal ?? 0,
+      protein: customProtein ?? 0,
+      fat: customFat ?? 0,
+      carbs: customCarbs ?? 0,
     );
   }
 
@@ -38,6 +60,10 @@ class RecipeIngredient {
     Food? food,
     String? customName,
     double? weightGrams,
+    double? customKcal,
+    double? customProtein,
+    double? customCarbs,
+    double? customFat,
   }) =>
       RecipeIngredient(
         id: id ?? this.id,
@@ -45,6 +71,10 @@ class RecipeIngredient {
         food: food ?? this.food,
         customName: customName ?? this.customName,
         weightGrams: weightGrams ?? this.weightGrams,
+        customKcal: customKcal ?? this.customKcal,
+        customProtein: customProtein ?? this.customProtein,
+        customCarbs: customCarbs ?? this.customCarbs,
+        customFat: customFat ?? this.customFat,
       );
 }
 

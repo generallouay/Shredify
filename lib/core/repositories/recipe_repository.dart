@@ -68,6 +68,10 @@ Map<String, dynamic> _ingredientToDoc(RecipeIngredient i) => {
       'foodId': i.foodId,
       'customName': i.customName,
       'weightGrams': i.weightGrams,
+      'customKcal': i.customKcal,
+      'customProtein': i.customProtein,
+      'customCarbs': i.customCarbs,
+      'customFat': i.customFat,
       'foodSnapshot': i.food == null
           ? null
           : {
@@ -127,6 +131,10 @@ RecipeIngredient _ingredientFromDoc(Map<String, dynamic> m) {
     food: food,
     customName: m['customName'] as String?,
     weightGrams: (m['weightGrams'] as num?)?.toDouble() ?? 0,
+    customKcal: (m['customKcal'] as num?)?.toDouble(),
+    customProtein: (m['customProtein'] as num?)?.toDouble(),
+    customCarbs: (m['customCarbs'] as num?)?.toDouble(),
+    customFat: (m['customFat'] as num?)?.toDouble(),
   );
 }
 
