@@ -1,13 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/models/macro_totals.dart';
+import '../../core/services/image_pick_service.dart';
 import '../../core/models/meal.dart';
 import '../../core/models/meal_entry.dart';
 import '../../core/models/meal_food_item.dart';
@@ -80,16 +78,9 @@ class _RecipeScreenState extends ConsumerState<RecipeScreen> {
   }
 
   Future<void> _pickPhoto(ImageSource source) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source, imageQuality: 85);
-    if (picked == null || !mounted) return;
-    final docs = await getApplicationDocumentsDirectory();
-    final dir = Directory(p.join(docs.path, 'shredify', 'images'));
-    if (!dir.existsSync()) dir.createSync(recursive: true);
-    final ext = p.extension(picked.path);
-    final dest = p.join(dir.path, '${const Uuid().v4()}$ext');
-    await File(picked.path).copy(dest);
-    if (mounted) setState(() => _photoPath = dest);
+    final path = await pickAndCropSquare(source);
+    if (path == null || !mounted) return;
+    setState(() => _photoPath = path);
   }
 
   void _showPhotoSheet() {

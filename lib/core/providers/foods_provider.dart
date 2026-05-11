@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../models/food.dart';
 import '../repositories/food_repository.dart';
 import 'auth_provider.dart';
+import 'meals_provider.dart';
 
 class FoodsNotifier extends StreamNotifier<List<Food>> {
   @override
@@ -23,6 +24,19 @@ class FoodsNotifier extends StreamNotifier<List<Food>> {
 
 final foodsProvider =
     StreamNotifierProvider<FoodsNotifier, List<Food>>(FoodsNotifier.new);
+
+/// foodId → number of times that food has appeared across all logged meals.
+/// Used to sort the food selector by most-used first.
+final foodUsageCountProvider = Provider<Map<String, int>>((ref) {
+  final meals = ref.watch(mealsProvider).valueOrNull ?? const [];
+  final counts = <String, int>{};
+  for (final meal in meals) {
+    for (final item in meal.items) {
+      counts[item.foodId] = (counts[item.foodId] ?? 0) + 1;
+    }
+  }
+  return counts;
+});
 
 final foodSearchProvider = StateProvider<String>((ref) => '');
 

@@ -85,6 +85,7 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
   @override
   Widget build(BuildContext context) {
     final foodsAsync = ref.watch(foodsProvider);
+    final usageCounts = ref.watch(foodUsageCountProvider);
     final totalAdded = _allPending.length;
     final color = Theme.of(context).colorScheme.primary;
 
@@ -154,6 +155,13 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
                       .where((f) => f.name.toLowerCase().contains(_query))
                       .toList();
                 }
+                filtered = List.of(filtered)
+                  ..sort((a, b) {
+                    final ca = usageCounts[a.id] ?? 0;
+                    final cb = usageCounts[b.id] ?? 0;
+                    if (cb != ca) return cb.compareTo(ca);
+                    return a.name.compareTo(b.name);
+                  });
                 if (filtered.isEmpty) {
                   return const Center(
                       child: Text('No foods found',

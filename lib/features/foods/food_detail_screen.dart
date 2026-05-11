@@ -1,13 +1,11 @@
-import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:go_router/go_router.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:path/path.dart' as p;
-import 'package:path_provider/path_provider.dart';
 import 'package:uuid/uuid.dart';
 import '../../core/models/food.dart';
 import '../../core/providers/foods_provider.dart';
+import '../../core/services/image_pick_service.dart';
 import '../shared/widgets/food_photo.dart';
 
 class FoodDetailScreen extends ConsumerStatefulWidget {
@@ -74,17 +72,9 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen> {
   }
 
   Future<void> _pickImage(ImageSource source) async {
-    final picker = ImagePicker();
-    final picked = await picker.pickImage(source: source, imageQuality: 80);
-    if (picked == null) return;
-
-    final docs = await getApplicationDocumentsDirectory();
-    final imgDir = Directory(p.join(docs.path, 'shredify', 'images'));
-    imgDir.createSync(recursive: true);
-    final ext = p.extension(picked.path);
-    final dest = p.join(imgDir.path, '${const Uuid().v4()}$ext');
-    await File(picked.path).copy(dest);
-    setState(() => _photoPath = dest);
+    final path = await pickAndCropSquare(source);
+    if (path == null || !mounted) return;
+    setState(() => _photoPath = path);
   }
 
   void _showImagePicker() {
