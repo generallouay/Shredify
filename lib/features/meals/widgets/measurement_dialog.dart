@@ -31,7 +31,7 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
     super.initState();
     final item = widget.initialItem;
     _method = item?.method ??
-        (widget.food.type == FoodType.canister
+        (widget.food.isCountable
             ? MeasurementMethod.canister
             : widget.food.type == FoodType.container
                 ? MeasurementMethod.container
@@ -156,10 +156,10 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
                   onTap: () =>
                       setState(() => _method = MeasurementMethod.container),
                 ),
-                if (widget.food.type == FoodType.canister) ...[
+                if (widget.food.isCountable) ...[
                   const SizedBox(width: 8),
                   _MethodChip(
-                    label: 'Canister',
+                    label: widget.food.type == FoodType.unit ? 'Units' : 'Canister',
                     selected: _method == MeasurementMethod.canister,
                     onTap: () =>
                         setState(() => _method = MeasurementMethod.canister),
@@ -206,9 +206,9 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                  labelText: 'Number of cans',
+                  labelText: 'Quantity (${widget.food.effectiveUnitLabel}s)',
                   helperText:
-                      '${widget.food.canSize?.toStringAsFixed(0) ?? '?'}g per can',
+                      '${widget.food.canSize?.toStringAsFixed(0) ?? '?'}g per ${widget.food.effectiveUnitLabel}',
                 ),
               ),
             const SizedBox(height: 20),

@@ -14,7 +14,7 @@ import '../../core/providers/meals_provider.dart';
 import '../../core/providers/recipes_provider.dart';
 import '../../core/repositories/recipe_repository.dart';
 import '../shared/widgets/food_photo.dart';
-import 'widgets/ingredient_picker_sheet.dart';
+import 'recipe_ingredient_picker_page.dart';
 
 class RecipeScreen extends ConsumerStatefulWidget {
   final String? recipeId;
@@ -123,20 +123,21 @@ class _RecipeScreenState extends ConsumerState<RecipeScreen> {
   }
 
   Future<void> _addIngredient() async {
-    final result = await showModalBottomSheet<RecipeIngredient>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => const IngredientPickerSheet(),
+    final result = await Navigator.push<RecipeIngredient>(
+      context,
+      MaterialPageRoute(
+          builder: (_) => const RecipeIngredientPickerPage()),
     );
     if (result == null || !mounted) return;
     setState(() => _ingredients.add(result));
   }
 
   Future<void> _editIngredient(int index) async {
-    final result = await showModalBottomSheet<RecipeIngredient>(
-      context: context,
-      isScrollControlled: true,
-      builder: (_) => IngredientPickerSheet(initial: _ingredients[index]),
+    final result = await Navigator.push<RecipeIngredient>(
+      context,
+      MaterialPageRoute(
+          builder: (_) => RecipeIngredientPickerPage(
+              initial: _ingredients[index])),
     );
     if (result == null || !mounted) return;
     setState(() => _ingredients[index] = result);

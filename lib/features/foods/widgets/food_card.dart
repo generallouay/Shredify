@@ -83,6 +83,7 @@ class _TypeBadge extends StatelessWidget {
       FoodType.standard => ('Standard', Colors.blueGrey),
       FoodType.container => ('Container', Colors.orange),
       FoodType.canister => ('Canister', const Color(0xFF00BFA5)),
+      FoodType.unit => ('Unit', const Color(0xFF7C4DFF)),
     };
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 7, vertical: 2),
