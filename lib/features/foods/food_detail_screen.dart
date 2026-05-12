@@ -24,6 +24,7 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen> {
   final _fatCtrl = TextEditingController();
   final _carbsCtrl = TextEditingController();
   final _canSizeCtrl = TextEditingController();
+  final _unitLabelCtrl = TextEditingController();
 
   FoodType _type = FoodType.standard;
   String? _photoPath;
@@ -56,6 +57,9 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen> {
         if (food.canSize != null) {
           _canSizeCtrl.text = food.canSize!.toStringAsFixed(1);
         }
+        if (food.unitLabel != null) {
+          _unitLabelCtrl.text = food.unitLabel!;
+        }
       });
     }
   }
@@ -68,6 +72,7 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen> {
     _fatCtrl.dispose();
     _carbsCtrl.dispose();
     _canSizeCtrl.dispose();
+    _unitLabelCtrl.dispose();
     super.dispose();
   }
 
@@ -120,6 +125,7 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen> {
     if (!_formKey.currentState!.validate()) return;
     setState(() => _loading = true);
 
+    final isCountable = _type == FoodType.canister || _type == FoodType.unit;
     final food = Food(
       id: _original?.id ?? const Uuid().v4(),
       name: _nameCtrl.text.trim(),
@@ -128,8 +134,11 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen> {
       fat: double.parse(_fatCtrl.text),
       carbs: double.parse(_carbsCtrl.text),
       type: _type,
-      canSize: _type == FoodType.canister && _canSizeCtrl.text.isNotEmpty
+      canSize: isCountable && _canSizeCtrl.text.isNotEmpty
           ? double.parse(_canSizeCtrl.text)
+          : null,
+      unitLabel: isCountable && _unitLabelCtrl.text.trim().isNotEmpty
+          ? _unitLabelCtrl.text.trim()
           : null,
       photoPath: _photoPath,
     );
@@ -273,15 +282,23 @@ class _FoodDetailScreenState extends ConsumerState<FoodDetailScreen> {
               onChanged: (t) => setState(() => _type = t),
             ),
 
-            // Canister size
-            if (_type == FoodType.canister) ...[
+            // Countable unit fields (canister + unit types)
+            if (_type == FoodType.canister || _type == FoodType.unit) ...[
               const SizedBox(height: 12),
               _Field(
                 controller: _canSizeCtrl,
-                label: 'Canister size (g)',
+                label: 'Weight per unit (g)',
                 enabled: _isEditing,
                 numeric: true,
-                validator: (v) => v == null || v.isEmpty ? 'Required for canister' : null,
+                validator: (v) =>
+                    v == null || v.isEmpty ? 'Required' : null,
+              ),
+              const SizedBox(height: 8),
+              _Field(
+                controller: _unitLabelCtrl,
+                label: 'Unit label (optional)',
+                hintText: _type == FoodType.canister ? 'e.g. can, scoop' : 'e.g. egg, tsp, piece',
+                enabled: _isEditing,
               ),
             ],
 
@@ -308,6 +325,7 @@ class _Field extends StatelessWidget {
   final String label;
   final bool enabled;
   final bool numeric;
+  final String? hintText;
   final String? Function(String?)? validator;
 
   const _Field({
@@ -315,6 +333,7 @@ class _Field extends StatelessWidget {
     required this.label,
     required this.enabled,
     this.numeric = false,
+    this.hintText,
     this.validator,
   });
 
@@ -326,7 +345,7 @@ class _Field extends StatelessWidget {
       keyboardType: numeric
           ? const TextInputType.numberWithOptions(decimal: true)
           : TextInputType.text,
-      decoration: InputDecoration(labelText: label),
+      decoration: InputDecoration(labelText: label, hintText: hintText),
       validator: validator ??
           (numeric
               ? (v) {

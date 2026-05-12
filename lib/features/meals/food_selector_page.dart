@@ -139,6 +139,10 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
                 _FilterChip(label: 'Canister', selected: _typeFilter == FoodType.canister, color: color,
                     onTap: () => setState(() => _typeFilter =
                         _typeFilter == FoodType.canister ? null : FoodType.canister)),
+                const SizedBox(width: 8),
+                _FilterChip(label: 'Unit', selected: _typeFilter == FoodType.unit, color: color,
+                    onTap: () => setState(() => _typeFilter =
+                        _typeFilter == FoodType.unit ? null : FoodType.unit)),
               ],
             ),
           ),
@@ -181,10 +185,10 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
                       food: food,
                       canisterCount: canCount,
                       addedCount: addedCount,
-                      onAdd: () => food.type == FoodType.canister
+                      onAdd: () => food.isCountable
                           ? _incrementCanister(food)
                           : _addStandardContainer(food),
-                      onDecrement: food.type == FoodType.canister && canCount > 0.0
+                      onDecrement: food.isCountable && canCount > 0.0
                           ? () => _decrementCanister(food)
                           : null,
                     );
@@ -223,7 +227,7 @@ class _FoodTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final color = Theme.of(context).colorScheme.primary;
-    final isCanister = food.type == FoodType.canister;
+    final isCanister = food.isCountable;
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 10),
@@ -268,10 +272,10 @@ class _FoodTile extends StatelessWidget {
               ),
               const SizedBox(width: 8),
               Text(
-                _fmtCount(canisterCount),
+                '${_fmtCount(canisterCount)} ${food.effectiveUnitLabel}',
                 style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    fontSize: 16,
+                    fontSize: 14,
                     color: color),
               ),
               const SizedBox(width: 8),

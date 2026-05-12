@@ -7,10 +7,6 @@ import '../../../core/models/recipe.dart';
 import '../../../core/providers/foods_provider.dart';
 import '../../shared/widgets/food_photo.dart';
 
-/// Bottom sheet that lets the user pick a food (existing in their library) and
-/// enter a weight, or add a custom ingredient (name + weight + optional macros
-/// with a multiplier, no need to add to the foods library).
-/// Returns the resulting [RecipeIngredient] via Navigator.pop.
 class IngredientPickerSheet extends ConsumerStatefulWidget {
   final RecipeIngredient? initial;
   const IngredientPickerSheet({super.key, this.initial});
@@ -30,26 +26,32 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
   final _fatCtrl = TextEditingController();
   final _multiplierCtrl = TextEditingController(text: '1');
   Food? _selectedFood;
+  double _unitCount = 1.0;
   bool _customMode = false;
+
+  bool get _isCountable => _selectedFood?.isCountable ?? false;
 
   @override
   void initState() {
     super.initState();
     final init = widget.initial;
     if (init != null) {
-      _weightCtrl.text = init.weightGrams.toStringAsFixed(0);
       if (init.food != null) {
         _selectedFood = init.food;
+        if (init.food!.isCountable && init.food!.canSize != null) {
+          _unitCount = (init.weightGrams / init.food!.canSize!).clamp(0.5, 999);
+        } else {
+          _weightCtrl.text = init.weightGrams.toStringAsFixed(0);
+        }
       } else if (init.customName != null) {
         _customMode = true;
         _customNameCtrl.text = init.customName!;
+        _weightCtrl.text = init.weightGrams.toStringAsFixed(0);
         if (init.customKcal != null) _kcalCtrl.text = _fmt(init.customKcal!);
         if (init.customProtein != null) {
           _proteinCtrl.text = _fmt(init.customProtein!);
         }
-        if (init.customCarbs != null) {
-          _carbsCtrl.text = _fmt(init.customCarbs!);
-        }
+        if (init.customCarbs != null) _carbsCtrl.text = _fmt(init.customCarbs!);
         if (init.customFat != null) _fatCtrl.text = _fmt(init.customFat!);
       }
     }
@@ -78,17 +80,17 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
   }
 
   void _confirm() {
-    final weight = double.tryParse(_weightCtrl.text);
-    if (weight == null || weight <= 0) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Enter a valid weight')));
-      return;
-    }
     if (_customMode) {
       final name = _customNameCtrl.text.trim();
       if (name.isEmpty) {
         ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(content: Text('Custom ingredient needs a name')));
+        return;
+      }
+      final weight = double.tryParse(_weightCtrl.text);
+      if (weight == null || weight <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Enter a valid weight')));
         return;
       }
       final mul = double.tryParse(_multiplierCtrl.text.trim()) ?? 1.0;
@@ -105,18 +107,39 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
           ));
       return;
     }
+
     if (_selectedFood == null) {
       ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Pick a food or switch to custom')));
       return;
     }
+
+    final double weightGrams;
+    if (_isCountable) {
+      final canSize = _selectedFood!.canSize;
+      if (canSize == null || canSize <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
+            content: Text('This food has no unit weight set')));
+        return;
+      }
+      weightGrams = _unitCount * canSize;
+    } else {
+      final w = double.tryParse(_weightCtrl.text);
+      if (w == null || w <= 0) {
+        ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Enter a valid weight')));
+        return;
+      }
+      weightGrams = w;
+    }
+
     Navigator.pop(
         context,
         RecipeIngredient(
           id: widget.initial?.id ?? const Uuid().v4(),
           foodId: _selectedFood!.id,
           food: _selectedFood,
-          weightGrams: weight,
+          weightGrams: weightGrams,
         ));
   }
 
@@ -155,19 +178,22 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
             const SizedBox(height: 12),
             if (_customMode) _buildCustomMode() else _buildPickMode(),
             const SizedBox(height: 12),
-            TextField(
-              controller: _weightCtrl,
-              keyboardType:
-                  const TextInputType.numberWithOptions(decimal: true),
-              inputFormatters: [
-                FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
-              ],
-              decoration: const InputDecoration(
-                labelText: 'Weight',
-                suffixText: 'g',
+            if (!_customMode && _isCountable)
+              _buildCountStepper()
+            else
+              TextField(
+                controller: _weightCtrl,
+                keyboardType:
+                    const TextInputType.numberWithOptions(decimal: true),
+                inputFormatters: [
+                  FilteringTextInputFormatter.allow(RegExp(r'[0-9.]')),
+                ],
+                decoration: const InputDecoration(
+                  labelText: 'Weight',
+                  suffixText: 'g',
+                ),
+                onSubmitted: (_) => _confirm(),
               ),
-              onSubmitted: (_) => _confirm(),
-            ),
             const SizedBox(height: 12),
             SizedBox(
               height: 48,
@@ -179,6 +205,54 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
           ],
         ),
       ),
+    );
+  }
+
+  Widget _buildCountStepper() {
+    final food = _selectedFood!;
+    final label = food.effectiveUnitLabel;
+    final grams = food.canSize != null
+        ? (_unitCount * food.canSize!).toStringAsFixed(0)
+        : '?';
+    final color = Theme.of(context).colorScheme.primary;
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.stretch,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            _StepBtn(
+              icon: Icons.remove,
+              onTap: _unitCount > 0.5
+                  ? () => setState(() => _unitCount -= 0.5)
+                  : null,
+            ),
+            const SizedBox(width: 16),
+            Column(
+              children: [
+                Text(
+                  _unitCount == _unitCount.truncateToDouble()
+                      ? '${_unitCount.toInt()} $label'
+                      : '${_unitCount.toStringAsFixed(1)} $label',
+                  style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: color),
+                ),
+                Text('≈ ${grams}g',
+                    style: const TextStyle(
+                        fontSize: 12, color: Colors.white38)),
+              ],
+            ),
+            const SizedBox(width: 16),
+            _StepBtn(
+              icon: Icons.add,
+              onTap: () => setState(() => _unitCount += 0.5),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -250,7 +324,8 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
           decoration: const InputDecoration(
             labelText: 'Multiplier',
             hintText: '1',
-            helperText: 'e.g. 2 for 2× a 100g entry — leave macros blank to skip',
+            helperText:
+                'e.g. 2 for 2× a 100g entry — leave macros blank to skip',
           ),
         ),
       ],
@@ -280,8 +355,7 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
         SizedBox(
           height: 240,
           child: foodsAsync.when(
-            loading: () =>
-                const Center(child: CircularProgressIndicator()),
+            loading: () => const Center(child: CircularProgressIndicator()),
             error: (e, _) => Center(child: Text('$e')),
             data: (foods) {
               final query = _searchCtrl.text.toLowerCase().trim();
@@ -309,14 +383,20 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
                             .withValues(alpha: 0.15)
                         : Colors.transparent,
                     child: ListTile(
-                      onTap: () => setState(() => _selectedFood = f),
-                      leading:
-                          FoodPhoto(photoPath: f.photoPath, width: 36, height: 36),
+                      onTap: () => setState(() {
+                        _selectedFood = f;
+                        _unitCount = 1.0;
+                      }),
+                      leading: FoodPhoto(
+                          photoPath: f.photoPath, width: 36, height: 36),
                       title: Text(f.name,
                           maxLines: 1, overflow: TextOverflow.ellipsis),
                       subtitle: Text(
-                          '${f.kcal.toStringAsFixed(0)} kcal · P${f.protein.toStringAsFixed(0)} C${f.carbs.toStringAsFixed(0)} F${f.fat.toStringAsFixed(0)} per 100g',
-                          style: const TextStyle(fontSize: 11)),
+                        f.isCountable && f.canSize != null
+                            ? '${f.kcal.toStringAsFixed(0)} kcal · P${f.protein.toStringAsFixed(0)} C${f.carbs.toStringAsFixed(0)} F${f.fat.toStringAsFixed(0)} per 100g  ·  ${f.canSize!.toStringAsFixed(0)}g/${f.effectiveUnitLabel}'
+                            : '${f.kcal.toStringAsFixed(0)} kcal · P${f.protein.toStringAsFixed(0)} C${f.carbs.toStringAsFixed(0)} F${f.fat.toStringAsFixed(0)} per 100g',
+                        style: const TextStyle(fontSize: 11),
+                      ),
                       trailing: selected
                           ? Icon(Icons.check_circle,
                               color: Theme.of(context).colorScheme.primary)
@@ -330,6 +410,37 @@ class _IngredientPickerSheetState extends ConsumerState<IngredientPickerSheet> {
           ),
         ),
       ],
+    );
+  }
+}
+
+class _StepBtn extends StatelessWidget {
+  final IconData icon;
+  final VoidCallback? onTap;
+  const _StepBtn({required this.icon, this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    final color = Theme.of(context).colorScheme.primary;
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 36,
+        height: 36,
+        decoration: BoxDecoration(
+          color: onTap != null
+              ? color.withValues(alpha: 0.15)
+              : Colors.white10,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(
+            color: onTap != null ? color : Colors.transparent,
+            width: 1.5,
+          ),
+        ),
+        child: Icon(icon,
+            size: 18,
+            color: onTap != null ? color : Colors.white24),
+      ),
     );
   }
 }

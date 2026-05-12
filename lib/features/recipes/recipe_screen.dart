@@ -515,6 +515,23 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
+String _ingredientSubtitle(RecipeIngredient ing, MacroTotals m) {
+  final food = ing.food;
+  if (food != null && food.isCountable && food.canSize != null) {
+    final count = ing.weightGrams / food.canSize!;
+    final countStr = count == count.truncateToDouble()
+        ? count.toInt().toString()
+        : count.toStringAsFixed(1);
+    final macros =
+        '${m.kcal.toStringAsFixed(0)} kcal  ·  P${m.protein.toStringAsFixed(0)} C${m.carbs.toStringAsFixed(0)} F${m.fat.toStringAsFixed(0)}';
+    return '$countStr ${food.effectiveUnitLabel}  ·  ${ing.weightGrams.toStringAsFixed(0)}g  ·  $macros';
+  }
+  if (food == null && !ing.hasCustomMacros) {
+    return '${ing.weightGrams.toStringAsFixed(0)}g  ·  custom (no macros)';
+  }
+  return '${ing.weightGrams.toStringAsFixed(0)}g  ·  ${m.kcal.toStringAsFixed(0)} kcal  ·  P${m.protein.toStringAsFixed(0)} C${m.carbs.toStringAsFixed(0)} F${m.fat.toStringAsFixed(0)}';
+}
+
 class _IngredientTile extends StatelessWidget {
   final RecipeIngredient ingredient;
   final VoidCallback onTap;
@@ -552,9 +569,7 @@ class _IngredientTile extends StatelessWidget {
                       style: const TextStyle(fontWeight: FontWeight.w600),
                     ),
                     Text(
-                      ingredient.food == null && !ingredient.hasCustomMacros
-                          ? '${ingredient.weightGrams.toStringAsFixed(0)}g  ·  custom (no macros)'
-                          : '${ingredient.weightGrams.toStringAsFixed(0)}g  ·  ${m.kcal.toStringAsFixed(0)} kcal  ·  P${m.protein.toStringAsFixed(0)} C${m.carbs.toStringAsFixed(0)} F${m.fat.toStringAsFixed(0)}',
+                      _ingredientSubtitle(ingredient, m),
                       style:
                           const TextStyle(fontSize: 11, color: Colors.white54),
                     ),

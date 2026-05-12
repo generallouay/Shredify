@@ -59,6 +59,7 @@ Map<String, dynamic> _foodToDoc(Food f) => {
       'carbs': f.carbs,
       'type': f.type.name,
       'canSize': f.canSize,
+      'unitLabel': f.unitLabel,
       'photoUrl': f.photoPath,
     };
 
@@ -71,6 +72,7 @@ Food _foodFromDoc(String id, Map<String, dynamic> m) => Food(
       carbs: (m['carbs'] as num?)?.toDouble() ?? 0,
       type: FoodType.values.byName((m['type'] as String?) ?? 'standard'),
       canSize: (m['canSize'] as num?)?.toDouble(),
+      unitLabel: m['unitLabel'] as String?,
       photoPath: m['photoUrl'] as String?,
     );
 

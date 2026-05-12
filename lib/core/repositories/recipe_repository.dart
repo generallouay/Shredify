@@ -83,6 +83,7 @@ Map<String, dynamic> _ingredientToDoc(RecipeIngredient i) => {
               'carbs': i.food!.carbs,
               'type': i.food!.type.name,
               'canSize': i.food!.canSize,
+              'unitLabel': i.food!.unitLabel,
               'photoUrl': i.food!.photoPath,
             },
     };
@@ -122,6 +123,7 @@ RecipeIngredient _ingredientFromDoc(Map<String, dynamic> m) {
       carbs: (snap['carbs'] as num?)?.toDouble() ?? 0,
       type: FoodType.values.byName((snap['type'] as String?) ?? 'standard'),
       canSize: (snap['canSize'] as num?)?.toDouble(),
+      unitLabel: snap['unitLabel'] as String?,
       photoPath: snap['photoUrl'] as String?,
     );
   }
