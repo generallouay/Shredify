@@ -456,7 +456,7 @@ class _MealListCard extends StatelessWidget {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${meal.items.length} item${meal.items.length != 1 ? 's' : ''}',
+                      '${meal.items.length + meal.entries.length} item${meal.items.length + meal.entries.length != 1 ? 's' : ''}',
                       style: const TextStyle(
                           color: Colors.white54, fontSize: 13),
                     ),

@@ -252,7 +252,7 @@ class _DailyMealCard extends StatelessWidget {
           style: const TextStyle(fontWeight: FontWeight.w600),
         ),
         subtitle: Text(
-          '${meal.items.length} items'
+          '${meal.items.length + meal.entries.length} item${meal.items.length + meal.entries.length != 1 ? 's' : ''}'
           '${meal.isCalculated ? '  •  ${totals.kcal.toStringAsFixed(0)} kcal' : ''}',
           style: const TextStyle(fontSize: 12, color: Colors.white54),
         ),

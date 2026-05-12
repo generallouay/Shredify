@@ -267,6 +267,7 @@ class _MeasurementSheet extends StatefulWidget {
 class _MeasurementSheetState extends State<_MeasurementSheet> {
   final _weightCtrl = TextEditingController();
   double _unitCount = 1.0;
+  bool _byWeight = false; // countable foods can switch to grams
 
   @override
   void initState() {
@@ -274,8 +275,15 @@ class _MeasurementSheetState extends State<_MeasurementSheet> {
     final init = widget.initial;
     if (init != null) {
       if (widget.food.isCountable && widget.food.canSize != null) {
-        _unitCount =
-            (init.weightGrams / widget.food.canSize!).clamp(0.5, 9999);
+        // Detect if the original was stored by weight (not a clean multiple)
+        final count = init.weightGrams / widget.food.canSize!;
+        final isCleanCount = (count * 2).round() == (count * 2);
+        if (isCleanCount) {
+          _unitCount = count.clamp(0.5, 9999);
+        } else {
+          _byWeight = true;
+          _weightCtrl.text = init.weightGrams.toStringAsFixed(0);
+        }
       } else {
         _weightCtrl.text = init.weightGrams.toStringAsFixed(0);
       }
@@ -290,7 +298,7 @@ class _MeasurementSheetState extends State<_MeasurementSheet> {
 
   void _confirm() {
     final double weightGrams;
-    if (widget.food.isCountable) {
+    if (widget.food.isCountable && !_byWeight) {
       final canSize = widget.food.canSize;
       if (canSize == null || canSize <= 0) {
         ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
@@ -347,8 +355,28 @@ class _MeasurementSheetState extends State<_MeasurementSheet> {
               ),
             ],
           ),
-          const SizedBox(height: 20),
           if (widget.food.isCountable) ...[
+            const SizedBox(height: 16),
+            Row(
+              children: [
+                _ModeChip(
+                  label: 'By ${widget.food.effectiveUnitLabel}',
+                  selected: !_byWeight,
+                  color: color,
+                  onTap: () => setState(() => _byWeight = false),
+                ),
+                const SizedBox(width: 8),
+                _ModeChip(
+                  label: 'By weight',
+                  selected: _byWeight,
+                  color: color,
+                  onTap: () => setState(() => _byWeight = true),
+                ),
+              ],
+            ),
+          ],
+          const SizedBox(height: 20),
+          if (widget.food.isCountable && !_byWeight) ...[
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
@@ -412,6 +440,39 @@ class _MeasurementSheetState extends State<_MeasurementSheet> {
   }
 }
 
+class _ModeChip extends StatelessWidget {
+  final String label;
+  final bool selected;
+  final Color color;
+  final VoidCallback onTap;
+  const _ModeChip(
+      {required this.label,
+      required this.selected,
+      required this.color,
+      required this.onTap});
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+        decoration: BoxDecoration(
+          color: selected ? color.withValues(alpha: 0.2) : const Color(0xFF2C2C2E),
+          borderRadius: BorderRadius.circular(20),
+          border:
+              Border.all(color: selected ? color : Colors.transparent, width: 1.5),
+        ),
+        child: Text(label,
+            style: TextStyle(
+                color: selected ? color : Colors.white54,
+                fontSize: 12,
+                fontWeight: selected ? FontWeight.w600 : FontWeight.normal)),
+      ),
+    );
+  }
+}
+
 class _StepBtn extends StatelessWidget {
   final IconData icon;
   final Color color;
@@ -462,9 +523,14 @@ class _CustomIngredientSheetState extends State<_CustomIngredientSheet> {
   final _fatCtrl = TextEditingController();
   final _multiplierCtrl = TextEditingController(text: '1');
 
+  void _rebuild() => setState(() {});
+
   @override
   void initState() {
     super.initState();
+    for (final c in [_kcalCtrl, _proteinCtrl, _carbsCtrl, _fatCtrl, _multiplierCtrl]) {
+      c.addListener(_rebuild);
+    }
     final init = widget.initial;
     if (init != null) {
       _nameCtrl.text = init.customName ?? '';
@@ -481,6 +547,9 @@ class _CustomIngredientSheetState extends State<_CustomIngredientSheet> {
 
   @override
   void dispose() {
+    for (final c in [_kcalCtrl, _proteinCtrl, _carbsCtrl, _fatCtrl, _multiplierCtrl]) {
+      c.removeListener(_rebuild);
+    }
     _nameCtrl.dispose();
     _weightCtrl.dispose();
     _kcalCtrl.dispose();
@@ -617,6 +686,13 @@ class _CustomIngredientSheetState extends State<_CustomIngredientSheet> {
                 helperText: 'Scale macros — e.g. 2 for double the amount',
               ),
             ),
+            _LivePreviewRow(
+              kcalText: _kcalCtrl.text,
+              proteinText: _proteinCtrl.text,
+              carbsText: _carbsCtrl.text,
+              fatText: _fatCtrl.text,
+              multiplierText: _multiplierCtrl.text,
+            ),
             const SizedBox(height: 20),
             FilledButton(
               onPressed: _confirm,
@@ -626,6 +702,93 @@ class _CustomIngredientSheetState extends State<_CustomIngredientSheet> {
         ),
       ),
     );
+  }
+}
+
+// ── Live macro preview ────────────────────────────────────────────────────────
+
+class _LivePreviewRow extends StatelessWidget {
+  final String kcalText;
+  final String proteinText;
+  final String carbsText;
+  final String fatText;
+  final String multiplierText;
+
+  const _LivePreviewRow({
+    required this.kcalText,
+    required this.proteinText,
+    required this.carbsText,
+    required this.fatText,
+    required this.multiplierText,
+  });
+
+  static String _fmtVal(double? v) {
+    if (v == null) return '—';
+    return v == v.truncateToDouble()
+        ? v.toInt().toString()
+        : v.toStringAsFixed(1);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final mul = double.tryParse(multiplierText.trim()) ?? 1.0;
+    final kcal = double.tryParse(kcalText.trim());
+    final protein = double.tryParse(proteinText.trim());
+    final carbs = double.tryParse(carbsText.trim());
+    final fat = double.tryParse(fatText.trim());
+
+    // Only show when multiplier isn't 1 or any macro field has a value
+    final hasAny = kcal != null || protein != null || carbs != null || fat != null;
+    if (!hasAny) return const SizedBox.shrink();
+
+    final scaledKcal = kcal == null ? null : kcal * mul;
+    final scaledProtein = protein == null ? null : protein * mul;
+    final scaledCarbs = carbs == null ? null : carbs * mul;
+    final scaledFat = fat == null ? null : fat * mul;
+
+    final color = Theme.of(context).colorScheme.primary;
+
+    return Padding(
+      padding: const EdgeInsets.only(top: 14),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          color: color.withValues(alpha: 0.07),
+          borderRadius: BorderRadius.circular(10),
+          border: Border.all(color: color.withValues(alpha: 0.2)),
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text('Total (×${mul == mul.truncateToDouble() ? mul.toInt() : mul.toStringAsFixed(2)})',
+                style: const TextStyle(fontSize: 12, color: Colors.white54)),
+            Row(
+              children: [
+                _MacroChip('${_fmtVal(scaledKcal)} kcal', color),
+                const SizedBox(width: 8),
+                _MacroChip('P ${_fmtVal(scaledProtein)}g', Colors.green),
+                const SizedBox(width: 8),
+                _MacroChip('C ${_fmtVal(scaledCarbs)}g', Colors.orange),
+                const SizedBox(width: 8),
+                _MacroChip('F ${_fmtVal(scaledFat)}g', Colors.red),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MacroChip extends StatelessWidget {
+  final String label;
+  final Color color;
+  const _MacroChip(this.label, this.color);
+
+  @override
+  Widget build(BuildContext context) {
+    return Text(label,
+        style: TextStyle(fontSize: 11, color: color, fontWeight: FontWeight.w600));
   }
 }
 
