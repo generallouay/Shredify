@@ -31,6 +31,11 @@ Map<String, dynamic> _entryToDoc(QuickEntry e) => {
       'carbs': e.carbs,
       'fat': e.fat,
       'description': e.description,
+      'rawKcal': e.rawKcal,
+      'rawProtein': e.rawProtein,
+      'rawCarbs': e.rawCarbs,
+      'rawFat': e.rawFat,
+      'multiplier': e.multiplier,
     };
 
 QuickEntry _entryFromDoc(String id, Map<String, dynamic> m) => QuickEntry(
@@ -42,6 +47,11 @@ QuickEntry _entryFromDoc(String id, Map<String, dynamic> m) => QuickEntry(
       carbs: (m['carbs'] as num?)?.toDouble(),
       fat: (m['fat'] as num?)?.toDouble(),
       description: m['description'] as String?,
+      rawKcal: (m['rawKcal'] as num?)?.toDouble(),
+      rawProtein: (m['rawProtein'] as num?)?.toDouble(),
+      rawCarbs: (m['rawCarbs'] as num?)?.toDouble(),
+      rawFat: (m['rawFat'] as num?)?.toDouble(),
+      multiplier: (m['multiplier'] as num?)?.toDouble(),
     );
 
 final quickEntryRepositoryProvider = Provider<QuickEntryRepository>(

@@ -16,7 +16,7 @@ class _MealEntryDialogState extends State<MealEntryDialog> {
   late final TextEditingController _proteinCtrl;
   late final TextEditingController _carbsCtrl;
   late final TextEditingController _fatCtrl;
-  final _multiplierCtrl = TextEditingController(text: '1');
+  late final TextEditingController _multiplierCtrl;
 
   bool get _isEditing => widget.initialEntry != null;
 
@@ -24,15 +24,24 @@ class _MealEntryDialogState extends State<MealEntryDialog> {
   void initState() {
     super.initState();
     final e = widget.initialEntry;
+    // Prefer the original user inputs when editing so the multiplier stays
+    // meaningful. Fall back to the scaled values for pre-raw-field entries.
+    final kcalSeed = e?.rawKcal ?? e?.kcal;
+    final proteinSeed = e?.rawProtein ?? e?.protein;
+    final carbsSeed = e?.rawCarbs ?? e?.carbs;
+    final fatSeed = e?.rawFat ?? e?.fat;
+    final mulSeed = e?.multiplier ?? 1.0;
+
     _descCtrl = TextEditingController(text: e?.description ?? '');
     _kcalCtrl = TextEditingController(
-        text: e != null ? _fmt(e.kcal) : '');
+        text: kcalSeed != null ? _fmt(kcalSeed) : '');
     _proteinCtrl = TextEditingController(
-        text: e?.protein != null ? _fmt(e!.protein!) : '');
+        text: proteinSeed != null ? _fmt(proteinSeed) : '');
     _carbsCtrl = TextEditingController(
-        text: e?.carbs != null ? _fmt(e!.carbs!) : '');
+        text: carbsSeed != null ? _fmt(carbsSeed) : '');
     _fatCtrl = TextEditingController(
-        text: e?.fat != null ? _fmt(e!.fat!) : '');
+        text: fatSeed != null ? _fmt(fatSeed) : '');
+    _multiplierCtrl = TextEditingController(text: _fmt(mulSeed));
   }
 
   String _fmt(double v) =>
@@ -49,27 +58,30 @@ class _MealEntryDialogState extends State<MealEntryDialog> {
     super.dispose();
   }
 
-  double? _scaled(String text, double mul) {
-    final v = double.tryParse(text.trim());
-    return v == null ? null : v * mul;
-  }
+  double? _parse(String text) => double.tryParse(text.trim());
 
   void _submit() {
-    final kcalRaw = double.tryParse(_kcalCtrl.text.trim());
+    final kcalRaw = _parse(_kcalCtrl.text);
     if (kcalRaw == null || kcalRaw <= 0) return;
-    final mul = _isEditing
-        ? 1.0
-        : (double.tryParse(_multiplierCtrl.text.trim()) ?? 1.0);
+    final mul = _parse(_multiplierCtrl.text) ?? 1.0;
+    final proteinRaw = _parse(_proteinCtrl.text);
+    final carbsRaw = _parse(_carbsCtrl.text);
+    final fatRaw = _parse(_fatCtrl.text);
     final desc = _descCtrl.text.trim();
 
     Navigator.of(context).pop(MealEntry(
       id: widget.initialEntry?.id ?? const Uuid().v4(),
       mealId: widget.initialEntry?.mealId ?? '',
       kcal: kcalRaw * mul,
-      protein: _scaled(_proteinCtrl.text, mul),
-      carbs: _scaled(_carbsCtrl.text, mul),
-      fat: _scaled(_fatCtrl.text, mul),
+      protein: proteinRaw == null ? null : proteinRaw * mul,
+      carbs: carbsRaw == null ? null : carbsRaw * mul,
+      fat: fatRaw == null ? null : fatRaw * mul,
       description: desc.isEmpty ? null : desc,
+      rawKcal: kcalRaw,
+      rawProtein: proteinRaw,
+      rawCarbs: carbsRaw,
+      rawFat: fatRaw,
+      multiplier: mul,
     ));
   }
 
@@ -122,19 +134,17 @@ class _MealEntryDialogState extends State<MealEntryDialog> {
               decoration: const InputDecoration(
                   labelText: 'Fat', suffixText: 'g'),
             ),
-            if (!_isEditing) ...[
-              const SizedBox(height: 12),
-              TextField(
-                controller: _multiplierCtrl,
-                keyboardType:
-                    const TextInputType.numberWithOptions(decimal: true),
-                decoration: const InputDecoration(
-                  labelText: 'Multiplier',
-                  hintText: '1',
-                  helperText: 'e.g. 2.5 for 250g of a 100g entry',
-                ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: _multiplierCtrl,
+              keyboardType:
+                  const TextInputType.numberWithOptions(decimal: true),
+              decoration: const InputDecoration(
+                labelText: 'Multiplier',
+                hintText: '1',
+                helperText: 'e.g. 2.5 for 250g of a 100g entry',
               ),
-            ],
+            ),
           ],
         ),
       ),

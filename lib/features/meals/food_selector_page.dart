@@ -191,6 +191,9 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
                       onDecrement: food.isCountable && canCount > 0.0
                           ? () => _decrementCanister(food)
                           : null,
+                      onAddByWeight: food.isCountable
+                          ? () => _addStandardContainer(food)
+                          : null,
                     );
                   },
                 );
@@ -212,6 +215,7 @@ class _FoodTile extends StatelessWidget {
   final int addedCount;
   final VoidCallback onAdd;
   final VoidCallback? onDecrement;
+  final VoidCallback? onAddByWeight;
 
   const _FoodTile({
     required this.food,
@@ -219,6 +223,7 @@ class _FoodTile extends StatelessWidget {
     required this.addedCount,
     required this.onAdd,
     this.onDecrement,
+    this.onAddByWeight,
   });
 
   static String _fmtCount(double v) =>
@@ -293,6 +298,22 @@ class _FoodTile extends StatelessWidget {
                 child: Icon(Icons.add, size: 16, color: color),
               ),
             ),
+            if (onAddByWeight != null) ...[
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: onAddByWeight,
+                child: Container(
+                  width: 28,
+                  height: 28,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF2C2C2E),
+                    borderRadius: BorderRadius.circular(6),
+                    border: Border.all(color: Colors.white24, width: 1.5),
+                  ),
+                  child: const Icon(Icons.scale, size: 14, color: Colors.white70),
+                ),
+              ),
+            ],
           ] else ...[
             Stack(
               clipBehavior: Clip.none,
