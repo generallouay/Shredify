@@ -8,6 +8,7 @@ class MealFoodItemCard extends StatelessWidget {
   final bool showMacros;
   final VoidCallback? onTap;
   final ValueChanged<double>? onWeightAfterChanged;
+  final FocusNode? weightAfterFocusNode;
   final VoidCallback? onDelete;
 
   const MealFoodItemCard({
@@ -16,6 +17,7 @@ class MealFoodItemCard extends StatelessWidget {
     this.showMacros = false,
     this.onTap,
     this.onWeightAfterChanged,
+    this.weightAfterFocusNode,
     this.onDelete,
   });
 
@@ -50,7 +52,10 @@ class MealFoodItemCard extends StatelessWidget {
                       item.weightAfter == null &&
                       onWeightAfterChanged != null) ...[
                     const SizedBox(height: 8),
-                    _WeightAfterInput(onSubmit: onWeightAfterChanged!),
+                    _WeightAfterInput(
+                      onSubmit: onWeightAfterChanged!,
+                      focusNode: weightAfterFocusNode,
+                    ),
                   ],
                   // Macros
                   if (showMacros && macros != null) ...[
@@ -111,7 +116,8 @@ class _MeasurementInfo extends StatelessWidget {
 
 class _WeightAfterInput extends StatefulWidget {
   final ValueChanged<double> onSubmit;
-  const _WeightAfterInput({required this.onSubmit});
+  final FocusNode? focusNode;
+  const _WeightAfterInput({required this.onSubmit, this.focusNode});
 
   @override
   State<_WeightAfterInput> createState() => _WeightAfterInputState();
@@ -126,6 +132,11 @@ class _WeightAfterInputState extends State<_WeightAfterInput> {
     super.dispose();
   }
 
+  void _submit() {
+    final v = double.tryParse(_ctrl.text);
+    if (v != null) widget.onSubmit(v);
+  }
+
   @override
   Widget build(BuildContext context) {
     return Row(
@@ -133,6 +144,9 @@ class _WeightAfterInputState extends State<_WeightAfterInput> {
         Expanded(
           child: TextField(
             controller: _ctrl,
+            focusNode: widget.focusNode,
+            textInputAction: TextInputAction.done,
+            onSubmitted: (_) => _submit(),
             keyboardType:
                 const TextInputType.numberWithOptions(decimal: true),
             decoration: const InputDecoration(
@@ -146,10 +160,7 @@ class _WeightAfterInputState extends State<_WeightAfterInput> {
         ),
         const SizedBox(width: 8),
         TextButton(
-          onPressed: () {
-            final v = double.tryParse(_ctrl.text);
-            if (v != null) widget.onSubmit(v);
-          },
+          onPressed: _submit,
           child: const Text('Set'),
         ),
       ],

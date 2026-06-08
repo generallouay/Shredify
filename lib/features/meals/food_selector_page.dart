@@ -20,6 +20,15 @@ class FoodSelectorPage extends ConsumerStatefulWidget {
 class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
   String _query = '';
   FoodType? _typeFilter;
+  final TextEditingController _searchCtrl = TextEditingController();
+  final FocusNode _searchFocus = FocusNode();
+
+  @override
+  void dispose() {
+    _searchCtrl.dispose();
+    _searchFocus.dispose();
+    super.dispose();
+  }
 
   // canister foods: foodId → count (supports 0.5 increments)
   final Map<String, double> _canisterCounts = {};
@@ -75,7 +84,11 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
         id: const Uuid().v4(),
         mealId: '',
       ));
+      _query = '';
     });
+    // Clear & refocus the search so the next food can be looked up right away.
+    _searchCtrl.clear();
+    if (mounted) _searchFocus.requestFocus();
   }
 
   void _confirm() {
@@ -111,6 +124,8 @@ class _FoodSelectorPageState extends ConsumerState<FoodSelectorPage> {
           Padding(
             padding: const EdgeInsets.fromLTRB(16, 8, 16, 0),
             child: TextField(
+              controller: _searchCtrl,
+              focusNode: _searchFocus,
               onChanged: (v) =>
                   setState(() => _query = v.toLowerCase().trim()),
               decoration: const InputDecoration(

@@ -29,7 +29,22 @@ class _MealScreenState extends ConsumerState<MealScreen> {
   bool _loading = true;
   Meal? _original;
 
+  // Focus nodes for the inline "weight after" inputs, keyed by item id, so we
+  // can hop focus to the next container item awaiting a weight.
+  final Map<String, FocusNode> _weightAfterNodes = {};
+
   bool get _isNew => widget.mealId == null;
+
+  FocusNode _weightAfterNode(String id) =>
+      _weightAfterNodes.putIfAbsent(id, () => FocusNode());
+
+  @override
+  void dispose() {
+    for (final node in _weightAfterNodes.values) {
+      node.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   void initState() {
@@ -108,6 +123,27 @@ class _MealScreenState extends ConsumerState<MealScreen> {
     setState(() {
       _items[index] = _items[index].copyWith(weightAfter: weightAfter);
     });
+    // After the list rebuilds, jump to the next container item that still
+    // needs a weight-after so the user can keep typing without tapping around.
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final nextId = _nextWeightAfterItemId(after: index);
+      if (nextId != null) {
+        _weightAfterNodes[nextId]?.requestFocus();
+      }
+    });
+  }
+
+  String? _nextWeightAfterItemId({required int after}) {
+    bool needsWeight(MealFoodItem it) =>
+        it.method == MeasurementMethod.container && it.weightAfter == null;
+    // Look forward first, then wrap to the start.
+    for (var i = after + 1; i < _items.length; i++) {
+      if (needsWeight(_items[i])) return _items[i].id;
+    }
+    for (var i = 0; i <= after && i < _items.length; i++) {
+      if (needsWeight(_items[i])) return _items[i].id;
+    }
+    return null;
   }
 
   Future<void> _save() async {
@@ -253,6 +289,8 @@ class _MealScreenState extends ConsumerState<MealScreen> {
                           onTap: () => _editItem(i),
                           onWeightAfterChanged: (v) =>
                               _updateWeightAfter(i, v),
+                          weightAfterFocusNode:
+                              _weightAfterNode(_items[i].id),
                           onDelete: () => _removeItem(i),
                         );
                       }

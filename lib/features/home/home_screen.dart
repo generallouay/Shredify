@@ -384,32 +384,35 @@ class _GoalBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final progress = goal > 0 ? (value / goal).clamp(0.0, 1.0) : 0.0;
+    final pct = goal > 0 ? (value / goal * 100).clamp(0, 999) : 0.0;
     final remaining = goal - value;
     final isOver = remaining < 0;
 
-    String rightText;
-    Color rightColor;
+    String remainingText;
+    Color remainingColor;
     if (isOver) {
-      rightText =
-          '+${(-remaining).toStringAsFixed(0)} $unit over';
-      rightColor = style == _BarStyle.calories
+      remainingText = '+${(-remaining).toStringAsFixed(0)} $unit over';
+      remainingColor = style == _BarStyle.calories
           ? const Color(0xFFEF5350)
           : Colors.white54;
     } else {
-      rightText = '${remaining.toStringAsFixed(0)} $unit left';
-      rightColor = Colors.white54;
+      remainingText = '${remaining.toStringAsFixed(0)} $unit left';
+      remainingColor = Colors.white54;
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
+        // label  ·  consumed / goal (pct%)
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             Text(label,
                 style: const TextStyle(fontSize: 13, color: Colors.white70)),
-            Text(rightText,
-                style: TextStyle(fontSize: 12, color: rightColor)),
+            Text(
+              '${value.toStringAsFixed(0)} / ${goal.toStringAsFixed(0)} $unit  (${pct.toStringAsFixed(0)}%)',
+              style: const TextStyle(fontSize: 12, color: Colors.white54),
+            ),
           ],
         ),
         const SizedBox(height: 4),
@@ -421,6 +424,16 @@ class _GoalBar extends StatelessWidget {
             backgroundColor: Colors.white12,
             valueColor: AlwaysStoppedAnimation<Color>(_barColor(progress)),
           ),
+        ),
+        const SizedBox(height: 3),
+        // remaining / over
+        Align(
+          alignment: Alignment.centerRight,
+          child: Text(remainingText,
+              style: TextStyle(
+                  fontSize: 11,
+                  color: remainingColor,
+                  fontWeight: FontWeight.w500)),
         ),
       ],
     );
