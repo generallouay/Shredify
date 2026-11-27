@@ -85,7 +85,7 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
         break;
       case MeasurementMethod.canister:
         if (v1 == null || v1 <= 0) {
-          _showError('Enter number of cans');
+          _showError('Enter number of ${widget.food.unitLabelFor(2)}');
           return;
         }
         item = _build(canCount: v1);
@@ -159,7 +159,7 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
                 if (widget.food.isCountable) ...[
                   const SizedBox(width: 8),
                   _MethodChip(
-                    label: widget.food.type == FoodType.unit ? 'Units' : 'Canister',
+                    label: widget.food.unitLabelTitle,
                     selected: _method == MeasurementMethod.canister,
                     onTap: () =>
                         setState(() => _method = MeasurementMethod.canister),
@@ -206,7 +206,7 @@ class _MeasurementDialogState extends State<MeasurementDialog> {
                 keyboardType:
                     const TextInputType.numberWithOptions(decimal: true),
                 decoration: InputDecoration(
-                  labelText: 'Quantity (${widget.food.effectiveUnitLabel}s)',
+                  labelText: 'Quantity (${widget.food.unitLabelFor(2)})',
                   helperText:
                       '${widget.food.canSize?.toStringAsFixed(0) ?? '?'}g per ${widget.food.effectiveUnitLabel}',
                 ),

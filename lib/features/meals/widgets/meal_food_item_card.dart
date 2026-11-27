@@ -108,7 +108,7 @@ class _MeasurementInfo extends StatelessWidget {
           '${item.weightAfter != null ? '  •  After: ${item.weightAfter!.toStringAsFixed(0)}g  •  Consumed: ${item.consumedGrams?.toStringAsFixed(0) ?? '?'}g' : ''}',
           style: style),
       MeasurementMethod.canister => Text(
-          '${item.canCount != null ? _fmtCount(item.canCount!) : '?'} can${(item.canCount ?? 0) != 1 ? 's' : ''}  •  ${item.consumedGrams?.toStringAsFixed(0) ?? '?'}g',
+          '${item.canCount != null ? _fmtCount(item.canCount!) : '?'} ${item.food?.unitLabelFor(item.canCount ?? 0) ?? 'units'}  •  ${item.consumedGrams?.toStringAsFixed(0) ?? '?'}g',
           style: style),
     };
   }

@@ -74,7 +74,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       ),
       GoRoute(
           path: '/meals/new',
-          builder: (_, __) => const MealScreen()),
+          builder: (_, s) =>
+              MealScreen(copyFromId: s.uri.queryParameters['copyFrom'])),
       GoRoute(
           path: '/meals/:id',
           builder: (_, s) =>

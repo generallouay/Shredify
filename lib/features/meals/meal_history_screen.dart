@@ -40,6 +40,8 @@ class MealHistoryScreen extends ConsumerWidget {
                   itemBuilder: (context, i) => _MealCard(
                     meal: meals[i],
                     onTap: () => context.push('/meals/${meals[i].id}'),
+                    onCopy: () =>
+                        context.push('/meals/new?copyFrom=${meals[i].id}'),
                   ),
                 ),
               ),
@@ -59,7 +61,9 @@ class MealHistoryScreen extends ConsumerWidget {
 class _MealCard extends StatelessWidget {
   final Meal meal;
   final VoidCallback onTap;
-  const _MealCard({required this.meal, required this.onTap});
+  final VoidCallback onCopy;
+  const _MealCard(
+      {required this.meal, required this.onTap, required this.onCopy});
 
   @override
   Widget build(BuildContext context) {
@@ -112,6 +116,12 @@ class _MealCard extends StatelessWidget {
                     ],
                   ],
                 ),
+              ),
+              IconButton(
+                icon: const Icon(Icons.copy_outlined,
+                    size: 20, color: Colors.white54),
+                tooltip: 'Copy to today',
+                onPressed: onCopy,
               ),
               const Icon(Icons.chevron_right, color: Colors.white38),
             ],

@@ -7,6 +7,7 @@ import '../../core/models/meal.dart';
 import '../../core/models/meal_entry.dart';
 import '../../core/models/meal_food_item.dart';
 import '../../core/models/macro_totals.dart';
+import '../../core/providers/foods_provider.dart';
 import '../../core/providers/meals_provider.dart';
 import '../../core/repositories/meal_repository.dart';
 import 'widgets/meal_food_item_card.dart';
@@ -16,7 +17,11 @@ import 'widgets/measurement_dialog.dart';
 
 class MealScreen extends ConsumerStatefulWidget {
   final String? mealId;
-  const MealScreen({super.key, this.mealId});
+
+  /// When set (and [mealId] is null), the new meal starts as a copy of this
+  /// meal's foods and entries, timestamped now.
+  final String? copyFromId;
+  const MealScreen({super.key, this.mealId, this.copyFromId});
 
   @override
   ConsumerState<MealScreen> createState() => _MealScreenState();
@@ -34,6 +39,7 @@ class _MealScreenState extends ConsumerState<MealScreen> {
   final Map<String, FocusNode> _weightAfterNodes = {};
 
   bool get _isNew => widget.mealId == null;
+  bool get _isCopy => _isNew && widget.copyFromId != null;
 
   FocusNode _weightAfterNode(String id) =>
       _weightAfterNodes.putIfAbsent(id, () => FocusNode());
@@ -49,7 +55,9 @@ class _MealScreenState extends ConsumerState<MealScreen> {
   @override
   void initState() {
     super.initState();
-    if (_isNew) {
+    if (_isCopy) {
+      _loadCopy();
+    } else if (_isNew) {
       _loading = false;
     } else {
       _loadMeal();
@@ -58,10 +66,11 @@ class _MealScreenState extends ConsumerState<MealScreen> {
 
   Future<void> _loadMeal() async {
     final meal = await ref.read(mealRepositoryProvider).getById(widget.mealId!);
+    final items = meal == null ? null : await _withLiveUnitLabels(meal.items);
     if (meal != null && mounted) {
       setState(() {
         _original = meal;
-        _items = List.from(meal.items);
+        _items = items!;
         _entries = List.from(meal.entries);
         _createdAt = meal.createdAt;
         _loading = false;
@@ -69,6 +78,53 @@ class _MealScreenState extends ConsumerState<MealScreen> {
     } else if (mounted) {
       setState(() => _loading = false);
     }
+  }
+
+  Future<void> _loadCopy() async {
+    final source =
+        await ref.read(mealRepositoryProvider).getById(widget.copyFromId!);
+    final items = source == null ? null : await _withLiveUnitLabels(source.items);
+    if (!mounted) return;
+    setState(() {
+      if (source != null) {
+        const uuid = Uuid();
+        _items = items!
+            .map((i) => i.copyWith(id: uuid.v4(), mealId: ''))
+            .toList();
+        _entries = source.entries
+            .map((e) => e.copyWith(id: uuid.v4(), mealId: ''))
+            .toList();
+      }
+      _createdAt = DateTime.now();
+      _loading = false;
+    });
+  }
+
+  /// Meals saved before the unit label was stored in the food snapshot show
+  /// "unit"/"can" instead of e.g. "scoop". Fill the label in from the live
+  /// food when the snapshot is missing it.
+  Future<List<MealFoodItem>> _withLiveUnitLabels(
+      List<MealFoodItem> items) async {
+    if (!items.any((i) => i.food != null && i.food!.unitLabel == null)) {
+      return List.from(items);
+    }
+    var foods = ref.read(foodsProvider).valueOrNull;
+    foods ??= await ref
+        .read(foodsProvider.future)
+        .timeout(const Duration(seconds: 3), onTimeout: () => const []);
+    final byId = {for (final f in foods) f.id: f};
+    return items.map((i) {
+      final snap = i.food;
+      final live = byId[i.foodId];
+      if (snap == null || snap.unitLabel != null || live?.unitLabel == null) {
+        return i;
+      }
+      return i.copyWith(food: snap.copyWith(unitLabel: live!.unitLabel));
+    }).toList();
+  }
+
+  void _copyMeal() {
+    context.pushReplacement('/meals/new?copyFrom=${_original!.id}');
   }
 
   Future<void> _addFood() async {
@@ -231,8 +287,14 @@ class _MealScreenState extends ConsumerState<MealScreen> {
 
     return Scaffold(
       appBar: AppBar(
-        title: Text(_isNew ? 'New Meal' : 'Edit Meal'),
+        title: Text(_isCopy ? 'Copy Meal' : _isNew ? 'New Meal' : 'Edit Meal'),
         actions: [
+          if (!_isNew)
+            IconButton(
+              icon: const Icon(Icons.copy_outlined),
+              tooltip: 'Copy to today',
+              onPressed: _copyMeal,
+            ),
           if (!_isNew)
             IconButton(
               icon: const Icon(Icons.delete_outline, color: Colors.redAccent),

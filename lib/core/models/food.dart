@@ -34,6 +34,20 @@ class Food {
     return type == FoodType.canister ? 'can' : 'unit';
   }
 
+  /// Unit label matched to [count]: "1 scoop", "2 scoops", "0.5 scoops".
+  String unitLabelFor(double count) {
+    final label = effectiveUnitLabel;
+    if (count == 1 || label.toLowerCase().endsWith('s')) return label;
+    return '${label}s';
+  }
+
+  /// Plural unit label with a capital first letter, for chips and titles,
+  /// e.g. "Scoops", "Units", "Cans".
+  String get unitLabelTitle {
+    final plural = unitLabelFor(2);
+    return plural[0].toUpperCase() + plural.substring(1);
+  }
+
   Food copyWith({
     String? id,
     String? name,

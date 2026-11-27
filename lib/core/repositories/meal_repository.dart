@@ -61,6 +61,7 @@ Map<String, dynamic> _itemToDoc(MealFoodItem i) => {
               'carbs': i.food!.carbs,
               'type': i.food!.type.name,
               'canSize': i.food!.canSize,
+              'unitLabel': i.food!.unitLabel,
               'photoUrl': i.food!.photoPath,
             },
     };
@@ -110,6 +111,7 @@ MealFoodItem _itemFromDoc(String mealId, Map<String, dynamic> m) {
       carbs: (snap['carbs'] as num?)?.toDouble() ?? 0,
       type: FoodType.values.byName((snap['type'] as String?) ?? 'standard'),
       canSize: (snap['canSize'] as num?)?.toDouble(),
+      unitLabel: snap['unitLabel'] as String?,
       photoPath: snap['photoUrl'] as String?,
     );
   }
